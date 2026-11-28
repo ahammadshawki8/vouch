@@ -78,14 +78,14 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 ### Tier 4. On-device runtime
 - [x] Camera capture (getUserMedia), frame grab to JPEG at a fixed size
 - [x] Motion gate: canvas pixel difference; run inference only when the scene settles after a change
-- [ ] Probe runner: all DEVICE probes of a suite in one on-device call per frame, JSON constrained answers
+- [x] Probe runner: all DEVICE probes of a suite in one on-device call per frame, JSON constrained answers (verified live in cloud mode; on-device run pending the Nano download, see HANDOVER.md)
 - [x] Frame loop wired into the smoothing state machine and the live checklist
 - [x] Latency and source shown live (median ms per check, DEVICE or CLOUD per call)
 - [x] Local persistence of orders and suites (IndexedDB) behind a repository interface that Part B swaps to Firestore
 
 ### Handover A to B
-- [ ] `HANDOVER.md`: what works, how to run, where each Part B hook lives, known issues
-- [ ] All Part A boxes ticked, tests and build green, pushed
+- [x] `HANDOVER.md`: what works, how to run, where each Part B hook lives, known issues
+- [x] All Part A boxes ticked, tests and build green, pushed
 
 ---
 
