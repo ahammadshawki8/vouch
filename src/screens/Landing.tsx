@@ -15,7 +15,7 @@ export function Landing() {
       <header className="topbar">
         <div className="left">
           <a href={href({ name: "landing" })} aria-label="Vouch home" style={{ textDecoration: "none" }}>
-            <Logo size={30} />
+            <Logo size={30} animate />
           </a>
         </div>
         <nav className="center navpills" aria-label="Sections">
@@ -36,7 +36,12 @@ export function Landing() {
 
       <section className="hero" aria-labelledby="hero-title">
         <h1 className="hero-title" id="hero-title">
-          Packed exactly as they asked.
+          {"Packed exactly as they asked.".split(" ").map((w, i) => (
+            <span className="w" key={i} style={{ "--i": i } as React.CSSProperties}>
+              {w}
+              {i < 4 ? " " : ""}
+            </span>
+          ))}
           <span className="anno" style={{ top: "0.1em", right: "-2%" }}>
             <Sticker tilt={8} tone="signal">changed blue to green</Sticker>
           </span>
@@ -68,7 +73,7 @@ export function Landing() {
         </h2>
 
         <ol className="steps">
-          <li className="step">
+          <li className="step reveal">
             <div className="step-top">
               <span className="step-index">1</span>
               <span className="oracle cloud">Cloud</span>
@@ -84,7 +89,7 @@ export function Landing() {
               go in the box.
             </p>
           </li>
-          <li className="step">
+          <li className="step reveal">
             <div className="step-top">
               <span className="step-index">2</span>
               <span className="oracle device">On device</span>
@@ -109,7 +114,7 @@ export function Landing() {
               internet needed.
             </p>
           </li>
-          <li className="step">
+          <li className="step reveal">
             <div className="step-top">
               <span className="step-index">3</span>
               <span className="oracle human">Customer</span>
@@ -136,7 +141,7 @@ export function Landing() {
           The cloud writes the checks. <span className="soft">The device runs them, thousands of times, for free.</span>
         </h2>
         <div className="split">
-          <div className="panel kraft">
+          <div className="panel kraft reveal">
             <span className="tape-piece" aria-hidden="true" />
             <span className="oracle cloud" style={{ justifySelf: "start", background: "rgba(255,250,245,.7)" }}>
               Compile, once per order
@@ -149,7 +154,7 @@ export function Landing() {
               <li>Takes over only for checks the device cannot judge</li>
             </ul>
           </div>
-          <div className="panel dark">
+          <div className="panel dark reveal">
             <span className="oracle device" style={{ justifySelf: "start", background: "rgba(255,255,255,.08)" }}>
               Run, on every frame
             </span>

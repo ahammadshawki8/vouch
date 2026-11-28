@@ -59,7 +59,7 @@ export function ReceiptView({ id }: { id: string }) {
 
           <ul className="receipt-items" aria-label="What was checked">
             {receipt.items.map((it, i) => (
-              <li key={i}>
+              <li key={i} style={{ "--i": i } as React.CSSProperties}>
                 <span className="tick" aria-hidden="true">
                   <CheckIcon size={18} />
                 </span>

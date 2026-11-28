@@ -25,9 +25,9 @@ export function TapeTick({ size = 40, color = "var(--signal)", title }: { size?:
   );
 }
 
-export function Logo({ size = 30, invert = false }: { size?: number; invert?: boolean }) {
+export function Logo({ size = 30, invert = false, animate = false }: { size?: number; invert?: boolean; animate?: boolean }) {
   return (
-    <span className={`logo${invert ? " invert" : ""}`} style={{ fontSize: size }}>
+    <span className={`logo${invert ? " invert" : ""}${animate ? " logo-anim" : ""}`} style={{ fontSize: size }}>
       <TapeTick size={size * 1.15} />
       <span className="logo-word">vouch</span>
     </span>
@@ -78,7 +78,7 @@ export function Sticker({
   className?: string;
 }) {
   return (
-    <span className={`sticker ${tone} ${className}`} style={{ transform: `rotate(${tilt}deg)` }}>
+    <span className={`sticker ${tone} ${className}`} style={{ "--tilt": `${tilt}deg` } as React.CSSProperties}>
       {children}
     </span>
   );

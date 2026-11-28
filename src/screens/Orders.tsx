@@ -55,8 +55,8 @@ export function Orders() {
         </div>
       ) : (
         <ul className="order-list">
-          {orders.map((o) => (
-            <li key={o.id}>
+          {orders.map((o, i) => (
+            <li key={o.id} style={{ "--i": i } as React.CSSProperties}>
               <a
                 className="order-row"
                 href={href(destination(o))}

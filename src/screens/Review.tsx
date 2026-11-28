@@ -175,17 +175,17 @@ export function Review({ id }: { id: string }) {
               </span>
             </div>
             <div className="where-strip">
-              <div className="where-cell device">
+              <div className="where-cell device" style={{ "--i": 0 } as React.CSSProperties}>
                 <span className="n num">{counts.DEVICE}</span>
                 <span className="muted">on this device, offline, free</span>
               </div>
-              <div className="where-cell">
+              <div className="where-cell" style={{ "--i": 1 } as React.CSSProperties}>
                 <span className="n num" style={{ color: "#2b4fc9" }}>
                   {counts.CLOUD}
                 </span>
                 <span className="muted">in the cloud, for fine detail</span>
               </div>
-              <div className="where-cell">
+              <div className="where-cell" style={{ "--i": 2 } as React.CSSProperties}>
                 <span className="n num" style={{ color: "#a3330a" }}>
                   {counts.HUMAN}
                 </span>
@@ -200,8 +200,8 @@ export function Review({ id }: { id: string }) {
               <span className="small muted">{suite.tests.length} checks</span>
             </div>
             <ul className="checks">
-              {suite.tests.map((t) => (
-                <li className="check-row" key={t.id}>
+              {suite.tests.map((t, i) => (
+                <li className="check-row" key={t.id} style={{ "--i": i } as React.CSSProperties}>
                   <div>
                     <h4>{checkLabel(t)}</h4>
                     <div className="kind">

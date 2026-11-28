@@ -13,6 +13,7 @@ import { DotArrow, TapeTick } from "../components/Brand";
 import { CheckIcon, CrossIcon, HandIcon } from "../components/Icons";
 import { SealMoment } from "../components/SealMoment";
 import { go } from "../router";
+import { resetTab, setTabState } from "../lib/favicon";
 
 function stateWord(t: Test, v: Verdict): string {
   if (v === "ATTESTED") return "Confirmed";
@@ -108,6 +109,14 @@ export function PackStation({ id }: { id: string }) {
     () => (order?.suite ? evaluateGate(order.suite.tests, loop.verdicts) : null),
     [order, loop.verdicts],
   );
+
+  useEffect(() => {
+    if (!order?.suite || !gate) return;
+    const total = order.suite.tests.length;
+    const label = `${gate.passed.length} of ${total} packed, ${order.title}`;
+    setTabState(gate.approved ? "pass" : gate.failed.length ? "fail" : "brand", label);
+  }, [gate, order]);
+  useEffect(() => resetTab, []);
 
   const start = async (deviceId?: string) => {
     setCamError(null);
@@ -303,13 +312,17 @@ export function PackStation({ id }: { id: string }) {
         </div>
 
         <ul className="live-list">
-          {suite.tests.map((t) => {
+          {suite.tests.map((t, i) => {
             const v = loop.verdicts[t.id] ?? "UNCERTAIN";
             const human = t.type === "ATTESTATION" && v !== "ATTESTED";
             const idle = v === "UNCERTAIN" && loop.checks === 0 && !human;
             const cls = human ? "human" : idle ? "idle" : v.toLowerCase();
             return (
-              <li key={t.id} className={`live ${cls}${loop.flash.has(t.id) ? " flash" : ""}`}>
+              <li
+                key={t.id}
+                className={`live ${cls}${loop.flash.has(t.id) ? " flash" : ""}`}
+                style={{ "--i": i } as React.CSSProperties}
+              >
                 <span className="mark" aria-hidden="true">
                   {(v === "PASS" || v === "ATTESTED") && <CheckIcon />}
                   {v === "FAIL" && <CrossIcon />}

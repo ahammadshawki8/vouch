@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 export type Route =
   | { name: "landing" }
@@ -44,8 +45,15 @@ export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseHash(window.location.hash));
   useEffect(() => {
     const on = () => {
-      setRoute(parseHash(window.location.hash));
-      window.scrollTo(0, 0);
+      const next = parseHash(window.location.hash);
+      const apply = () => {
+        setRoute(next);
+        window.scrollTo(0, 0);
+      };
+      const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+      const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (doc.startViewTransition && !calm) doc.startViewTransition(() => flushSync(apply));
+      else apply();
     };
     window.addEventListener("hashchange", on);
     return () => window.removeEventListener("hashchange", on);

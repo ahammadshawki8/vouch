@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "@fontsource-variable/funnel-display/index.css";
 import "@fontsource-variable/funnel-sans/index.css";
 import "./styles/app.css";
+import "./styles/motion.css";
 import { App } from "./App";
 
 if (import.meta.env.DEV) {
