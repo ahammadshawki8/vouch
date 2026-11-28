@@ -70,3 +70,9 @@ Development helper: in the browser console run `await vouchSeed()` and reload. I
 - Keep the style rules: no emoji, no em dashes, no decorative unicode anywhere.
 
 ## Verification log
+
+2026-11-28, Shawki (Part A):
+- Firebase project `vouch-9315d` created. AI Logic on the Gemini Developer API, App Check enforced, web app `vouch-web` registered with Fraud Defense (reCAPTCHA Enterprise). Localhost is an allowed key domain, so local dev uses the real provider; no debug token needed.
+- Cloud compile verified live through the New order screen: code-mixed chat ("notebook ta green kore dao, blue na") produced PRESENCE/COUNT/ABSENCE/ATTESTATION/NO_EXTRAS tests and the blue-to-green change, about 3 s on gemini-3.5-flash-lite.
+- Model timing measured on this project: gemini-3.5-flash-lite about 3 s per compile; gemini-3.8-flash over 90 s; gemini-4-hydrogen 22 s. Defaults are flash-lite; override with VITE_COMPILER_MODEL / VITE_CHECK_MODEL.
+- Cloud probe runner verified with `await vouchSmoke("correct","cloud")` and `("wrong","cloud")`: correct scene all PASS, wrong scene FAIL on wrong notebook, blue notebook present and pen count, PASS on highlighter. 2.6 to 5.5 s per call.

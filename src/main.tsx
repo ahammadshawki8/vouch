@@ -6,7 +6,7 @@ import { App } from "./App";
 
 if (import.meta.env.DEV) {
   void import("./dev").then((m) => {
-    (window as unknown as { vouchSeed: () => Promise<string> }).vouchSeed = m.seedReferenceOrder;
+    Object.assign(window, { vouchSeed: m.seedReferenceOrder, vouchSmoke: m.smokeTest });
   });
 }
 

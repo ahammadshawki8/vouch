@@ -10,7 +10,7 @@
   --sheet: #ffffff; /* raised paper */
   --ink: #13294b; /* stamp-pad navy, primary text */
   --ink-2: #4a5a78; /* secondary text */
-  --ink-3: #7a8699; /* tertiary text, hints */
+  --ink-3: #5f6b7d; /* tertiary text, hints (5.2:1 on label stock) */
   --rule: #c9ced8; /* lines that separate information */
   --rule-soft: #e3e6ec;
   --pass: #0f7b4f; /* stamp green */

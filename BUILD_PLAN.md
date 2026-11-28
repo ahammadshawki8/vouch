@@ -41,47 +41,47 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 ## Part A (Shawki)
 
 ### Tier 0. Foundation
-- [ ] Vite + React + TypeScript app at repo root, strict TS
-- [ ] Vitest configured, `npm test` runs
-- [ ] Self-hosted font (works offline), design tokens in one CSS file
-- [ ] Hash router with routes: orders, new order, order review, pack station, receipt
-- [ ] `.env.example` with all Firebase keys; `.env.local` git-ignored
-- [ ] Firebase app init module, App Check (reCAPTCHA Enterprise, debug token in dev)
+- [x] Vite + React + TypeScript app at repo root, strict TS
+- [x] Vitest configured, `npm test` runs
+- [x] Self-hosted font (works offline), design tokens in one CSS file
+- [x] Hash router with routes: orders, new order, order review, pack station, receipt
+- [x] `.env.example` with all Firebase keys; `.env.local` git-ignored
+- [x] Firebase app init module, App Check (reCAPTCHA Enterprise, debug token in dev)
 
 ### Tier 1. Domain core (pure TypeScript, fully unit tested)
-- [ ] Types: `Order`, `TestSuite`, `Test` (PRESENCE, COUNT, ATTRIBUTE, ABSENCE, NO_EXTRAS, ATTESTATION), `Probe`, `Oracle` (DEVICE, CLOUD, HUMAN), `Verdict` (PASS, FAIL, UNCERTAIN, ATTESTED)
-- [ ] Probe evaluation: probe answers to a test verdict for a single frame
-- [ ] Temporal smoothing state machine: a test changes state only when 2 of the last 3 frames agree
-- [ ] Approval gate: approved only when every test is PASS or ATTESTED
-- [ ] Suite validation: reject malformed compiler output (schema check, probe rules)
-- [ ] Unit tests for every function above, including the change rule (replacement creates ATTRIBUTE plus ABSENCE)
+- [x] Types: `Order`, `TestSuite`, `Test` (PRESENCE, COUNT, ATTRIBUTE, ABSENCE, NO_EXTRAS, ATTESTATION), `Probe`, `Oracle` (DEVICE, CLOUD, HUMAN), `Verdict` (PASS, FAIL, UNCERTAIN, ATTESTED)
+- [x] Probe evaluation: probe answers to a test verdict for a single frame
+- [x] Temporal smoothing state machine: a test changes state only when 2 of the last 3 frames agree
+- [x] Approval gate: approved only when every test is PASS or ATTESTED
+- [x] Suite validation: reject malformed compiler output (schema check, probe rules)
+- [x] Unit tests for every function above, including the change rule (replacement creates ATTRIBUTE plus ABSENCE)
 
 ### Tier 2. AI layer (cloud compiler)
-- [ ] Model factory: cloud compiler model (`ONLY_IN_CLOUD`), runtime model (`ONLY_ON_DEVICE`), escalation model (`ONLY_IN_CLOUD`), each with its own params
-- [ ] Device readiness: detect on-device availability, trigger `initializeDeviceModel` from a click, show download progress
-- [ ] Compiler: chat screenshots + product photos + pasted text to a typed `TestSuite` with probes (structured JSON output, cloud)
-- [ ] Compiler prompt enforces: one attribute per probe, yes/no/unsure answers, counts as choice, replacement creates ABSENCE, invisible attributes become ATTESTATION
-- [ ] Result passes Tier 1 suite validation, with one automatic retry on invalid output
-- [ ] Every AI call records `inferenceSource` and latency in a call log
+- [x] Model factory: cloud compiler model (`ONLY_IN_CLOUD`), runtime model (`ONLY_ON_DEVICE`), escalation model (`ONLY_IN_CLOUD`), each with its own params
+- [x] Device readiness: detect on-device availability, trigger `initializeDeviceModel` from a click, show download progress
+- [x] Compiler: chat screenshots + product photos + pasted text to a typed `TestSuite` with probes (structured JSON output, cloud)
+- [x] Compiler prompt enforces: one attribute per probe, yes/no/unsure answers, counts as choice, replacement creates ABSENCE, invisible attributes become ATTESTATION
+- [x] Result passes Tier 1 suite validation, with one automatic retry on invalid output
+- [x] Every AI call records `inferenceSource` and latency in a call log
 
 ### Tier 3. Frontend (all screens)
-- [ ] Orders screen: list of orders with status (draft, compiled, packing, vouched)
-- [ ] New order screen: drop screenshots, product photos, paste chat text; one button to compile
-- [ ] Review screen: sources on the left, compiled tests on the right, seller can edit or delete a test and confirm
-- [ ] Suite health panel: how many tests run on DEVICE, CLOUD, HUMAN (filled by Part B validation, shows "not validated" until then)
-- [ ] Pack station: camera view, large checklist readable at arm's length, per-test oracle indicator, device status
-- [ ] Seal control and attestation prompts (UI only, logic wired in Part B)
-- [ ] Vouched stamp moment (one orchestrated animation, reduced motion respected)
-- [ ] Receipt screen: sealed photo, tests with verdict and how each was checked, timestamp, "Something is not right" button (UI only)
-- [ ] Responsive down to tablet, keyboard focus visible, contrast checked
+- [x] Orders screen: list of orders with status (draft, compiled, packing, vouched)
+- [x] New order screen: drop screenshots, product photos, paste chat text; one button to compile
+- [x] Review screen: sources on the left, compiled tests on the right, seller can edit or delete a test and confirm
+- [x] Suite health panel: how many tests run on DEVICE, CLOUD, HUMAN (filled by Part B validation, shows "not validated" until then)
+- [x] Pack station: camera view, large checklist readable at arm's length, per-test oracle indicator, device status
+- [x] Seal control and attestation prompts (UI only, logic wired in Part B)
+- [x] Vouched stamp moment (one orchestrated animation, reduced motion respected)
+- [x] Receipt screen: sealed photo, tests with verdict and how each was checked, timestamp, "Something is not right" button (UI only)
+- [x] Responsive down to tablet, keyboard focus visible, contrast checked (breakpoint at 960px in CSS; re-check on a real tablet in Tier 10)
 
 ### Tier 4. On-device runtime
-- [ ] Camera capture (getUserMedia), frame grab to JPEG at a fixed size
-- [ ] Motion gate: canvas pixel difference; run inference only when the scene settles after a change
+- [x] Camera capture (getUserMedia), frame grab to JPEG at a fixed size
+- [x] Motion gate: canvas pixel difference; run inference only when the scene settles after a change
 - [ ] Probe runner: all DEVICE probes of a suite in one on-device call per frame, JSON constrained answers
-- [ ] Frame loop wired into the smoothing state machine and the live checklist
-- [ ] Latency and source shown live (median ms per check, DEVICE or CLOUD per call)
-- [ ] Local persistence of orders and suites (IndexedDB) behind a repository interface that Part B swaps to Firestore
+- [x] Frame loop wired into the smoothing state machine and the live checklist
+- [x] Latency and source shown live (median ms per check, DEVICE or CLOUD per call)
+- [x] Local persistence of orders and suites (IndexedDB) behind a repository interface that Part B swaps to Firestore
 
 ### Handover A to B
 - [ ] `HANDOVER.md`: what works, how to run, where each Part B hook lives, known issues
