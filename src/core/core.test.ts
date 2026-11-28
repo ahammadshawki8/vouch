@@ -217,3 +217,11 @@ describe("change coverage matching", () => {
     expect(r.errors).toEqual([]);
   });
 });
+
+describe("probe grouping", () => {
+  it("batches positive questions and isolates each must-not-be-there question", async () => {
+    const { groupProbes } = await import("../ai/probeRunner");
+    const groups = groupProbes(deviceProbes(suite)).map((g) => g.map((p) => p.id));
+    expect(groups).toEqual([["p1", "p3", "p4"], ["p2"]]);
+  });
+});

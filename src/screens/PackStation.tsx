@@ -14,6 +14,7 @@ import { CheckIcon, CrossIcon, HandIcon } from "../components/Icons";
 import { SealMoment } from "../components/SealMoment";
 import { go } from "../router";
 import { resetTab, setTabState } from "../lib/favicon";
+import { drawDemoBox, type DemoVariant } from "../lib/demo";
 
 function stateWord(t: Test, v: Verdict): string {
   if (v === "ATTESTED") return "Confirmed";
@@ -63,6 +64,7 @@ export function PackStation({ id }: { id: string }) {
   const [sealing, setSealing] = useState(false);
   const [sealReasons, setSealReasons] = useState<string[]>([]);
   const [sealed, setSealed] = useState<{ receiptId: string; at: number } | null>(null);
+  const [demo, setDemo] = useState<DemoVariant | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -89,19 +91,15 @@ export function PackStation({ id }: { id: string }) {
     if (where === "device" && firebaseConfigured) void warmDevice();
   }, [where]);
 
-  // Development only: lets scripted demos and tests feed a still image instead of the camera.
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    const onPhoto = (e: Event) => {
-      const url = (e as CustomEvent<string>).detail;
-      stopCamera(streamRef.current);
-      streamRef.current = null;
-      setSource(null);
-      setPhotoUrl(url);
-    };
-    window.addEventListener("vouch-dev-photo", onPhoto);
-    return () => window.removeEventListener("vouch-dev-photo", onPhoto);
-  }, []);
+  /** The demo box: a drawn parcel for trying Vouch without products. The model checks it like any frame. */
+  const showDemo = (variant: DemoVariant) => {
+    stopCamera(streamRef.current);
+    streamRef.current = null;
+    if (photoUrl?.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
+    setDemo(variant);
+    setSource(null);
+    setPhotoUrl(drawDemoBox(variant));
+  };
   const canRun = firebaseConfigured && (where === "device" || online);
   const loop = usePackLoop(order?.suite, source, canRun && !sealed, where);
 
@@ -120,8 +118,9 @@ export function PackStation({ id }: { id: string }) {
 
   const start = async (deviceId?: string) => {
     setCamError(null);
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    if (photoUrl?.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
     setPhotoUrl(null);
+    setDemo(null);
     try {
       stopCamera(streamRef.current);
       const video = videoRef.current!;
@@ -137,7 +136,8 @@ export function PackStation({ id }: { id: string }) {
     if (!file) return;
     stopCamera(streamRef.current);
     streamRef.current = null;
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    if (photoUrl?.startsWith("blob:")) URL.revokeObjectURL(photoUrl);
+    setDemo(null);
     setSource(null);
     setPhotoUrl(URL.createObjectURL(file));
   };
@@ -208,6 +208,9 @@ export function PackStation({ id }: { id: string }) {
                 Use a photo
               </button>
             </div>
+            <button className="demo-link" onClick={() => showDemo("wrong")}>
+              No products at hand? <b>Try the demo box</b>, a drawn parcel for the sample order.
+            </button>
             {camError && <p style={{ color: "#f5b7c1" }}>The camera did not start: {camError}</p>}
           </div>
         )}
@@ -245,7 +248,17 @@ export function PackStation({ id }: { id: string }) {
               <span className="hud-chip num">{loop.checks} looks</span>
             </div>
             <div className="hud-bottom">
-              {cameras.length > 1 ? (
+              {demo ? (
+                <div className="demo-switch" role="group" aria-label="Demo box contents">
+                  <span>Demo box</span>
+                  <button aria-pressed={demo === "wrong"} onClick={() => showDemo("wrong")}>
+                    Packed wrong
+                  </button>
+                  <button aria-pressed={demo === "right"} onClick={() => showDemo("right")}>
+                    Packed right
+                  </button>
+                </div>
+              ) : cameras.length > 1 ? (
                 <span className="hud-chip">
                   <select
                     aria-label="Camera"

@@ -6,11 +6,12 @@ import "./styles/app.css";
 import "./styles/motion.css";
 import "./styles/photos.css";
 import "./styles/how.css";
+import "./styles/pages.css";
 import { App } from "./App";
 
 if (import.meta.env.DEV) {
   void import("./dev").then((m) => {
-    Object.assign(window, { vouchSeed: m.seedReferenceOrder, vouchSmoke: m.smokeTest, vouchScene: m.showScene });
+    Object.assign(window, { vouchSeed: m.seedReferenceOrder, vouchSmoke: m.smokeTest });
   });
 }
 

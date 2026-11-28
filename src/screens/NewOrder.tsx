@@ -6,6 +6,7 @@ import { dataUrl, fileToSource, textSource } from "../lib/files";
 import { newId, repo } from "../data/repo";
 import { go } from "../router";
 import { DotArrow, Sticker } from "../components/Brand";
+import { SAMPLE_CHAT, SAMPLE_TITLE, takeSample } from "../lib/demo";
 
 const KIND_TEXT: Record<SourceKind, string> = {
   screenshot: "Chat screenshot",
@@ -24,6 +25,14 @@ export function NewOrder() {
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const counter = useRef(1);
+
+  const useSample = () => {
+    setTitle(SAMPLE_TITLE);
+    setChat(SAMPLE_CHAT);
+  };
+  useEffect(() => {
+    if (takeSample()) useSample();
+  }, []);
 
   useEffect(() => {
     if (busySince === null) return;
@@ -194,7 +203,12 @@ export function NewOrder() {
             />
           </div>
           <div className="field">
-            <label htmlFor="chat">Or paste the messages</label>
+            <div className="label-row">
+              <label htmlFor="chat">Or paste the messages</label>
+              <button type="button" className="text-btn" onClick={useSample}>
+                Use the sample chat
+              </button>
+            </div>
             <textarea
               id="chat"
               value={chat}

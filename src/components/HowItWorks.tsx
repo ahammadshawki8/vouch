@@ -189,7 +189,7 @@ function BoxScene() {
           <em>blue notebook, no</em>
         </span>
         <span className="scan-chip">
-          <span className="lamp" /> On device, 1.4 s
+          <span className="lamp" /> On device, 2.2 s
         </span>
         <span className="scan-chip offline">Wi-Fi off</span>
       </div>
@@ -272,7 +272,7 @@ const STEPS = [
     where: <span className="oracle device">On device, every frame</span>,
     title: "Check the box live.",
     body: "Point any webcam into the box. Gemini Nano answers small, pre-tested questions about each settled frame, right on your computer. It costs nothing per look and keeps working when the internet drops.",
-    tags: ["Gemini Nano", "About 1.4 s a look", "Works offline", "Code decides pass or fail"],
+    tags: ["Gemini Nano", "About 2 s a look", "Works offline", "Code decides pass or fail"],
     tone: "ink",
     scene: <BoxScene />,
   },

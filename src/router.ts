@@ -4,6 +4,8 @@ import { flushSync } from "react-dom";
 export type Route =
   | { name: "landing" }
   | { name: "orders" }
+  | { name: "setup" }
+  | { name: "engine" }
   | { name: "new" }
   | { name: "review"; id: string }
   | { name: "pack"; id: string }
@@ -13,6 +15,8 @@ export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   const [head, id] = parts;
   if (head === "orders") return { name: "orders" };
+  if (head === "setup") return { name: "setup" };
+  if (head === "engine") return { name: "engine" };
   if (head === "new") return { name: "new" };
   if (head === "order" && id) return { name: "review", id };
   if (head === "pack" && id) return { name: "pack", id };
@@ -26,6 +30,10 @@ export function href(r: Route): string {
       return "#/";
     case "orders":
       return "#/orders";
+    case "setup":
+      return "#/setup";
+    case "engine":
+      return "#/engine";
     case "new":
       return "#/new";
     case "review":

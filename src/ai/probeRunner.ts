@@ -10,8 +10,12 @@ export interface ProbeRun {
 }
 
 /**
- * Ask every probe about one frame in a single model call.
- * On the device this costs nothing, which is what makes continuous checking affordable.
+ * Ask a frame its questions on the device, where each look costs nothing.
+ *
+ * Questions that must pass on "yes" or a count go together in one call. Each question that must
+ * pass on "no" (an item that must not be in the box) gets a call of its own. Measured on Gemini
+ * Nano: mixing "green cover?" and "blue cover?" in one prompt made whichever came second unreliable,
+ * while asked alone each was answered correctly every time.
  */
 export async function runProbes(
   probes: Probe[],
@@ -20,15 +24,34 @@ export async function runProbes(
   purpose: CallPurpose = "probe",
 ): Promise<ProbeRun> {
   if (probes.length === 0) throw new Error("No probes to run.");
-  const model = runtimeModel(answersSchema(probes), where);
-  const { value, record } = await timed(purpose, async () => {
-    const res = await model.generateContent([
-      probePrompt(probes),
-      { type: "inlineData", inlineData: { data: jpegBase64, mimeType: "image/jpeg" } },
-    ]);
-    return { value: res.response.text(), source: res.response.inferenceSource };
-  });
-  return { answers: parseAnswers(value, probes), record };
+  const groups = groupProbes(probes);
+  const answers: Record<string, string> = {};
+  let last: CallRecord | null = null;
+  let ms = 0;
+  for (const group of groups) {
+    const model = runtimeModel(answersSchema(group), where);
+    const { value, record } = await timed(purpose, async () => {
+      const res = await model.generateContent([
+        probePrompt(group),
+        { type: "inlineData", inlineData: { data: jpegBase64, mimeType: "image/jpeg" } },
+      ]);
+      return { value: res.response.text(), source: res.response.inferenceSource };
+    });
+    Object.assign(answers, parseAnswers(value, group));
+    ms += record.ms;
+    last = record;
+  }
+  return { answers, record: { ...(last as CallRecord), ms } };
+}
+
+const isNegative = (p: Probe) => p.kind === "yesno" && p.pass === "no";
+
+/** One batch for positive questions, then one call per negative question. */
+export function groupProbes(probes: Probe[]): Probe[][] {
+  const positive = probes.filter((p) => !isNegative(p));
+  const groups = positive.length ? [positive] : [];
+  for (const p of probes.filter(isNegative)) groups.push([p]);
+  return groups;
 }
 
 /** Keep only answers to known probes, lowercased. Anything unparseable becomes "unsure". */

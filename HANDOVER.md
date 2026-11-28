@@ -79,3 +79,11 @@ Development helper: in the browser console run `await vouchSeed()` and reload. I
 - On-device (Gemini Nano) download started from the app on Shawki's Chrome; still downloading at handover time (slow connection). The on-device path uses the same `runProbes` code as the verified cloud path with `ONLY_ON_DEVICE`. **First thing to run once Chrome reports the model ready:** `await vouchSmoke("correct")` and `await vouchSmoke("wrong")` in the dev console. Expect `source: "on_device"`, PASS on the correct scene, FAILs on the wrong one, and note the latency. Then try the pack station with "Use a photo instead" and with the camera.
 
 Part A status: complete except the live on-device check above. Tests: `npm test` (33 passing). Build: `npm run build` passes.
+
+2026-11-28, Shawki (UI and accuracy pass):
+- New pages: Setup (`#/setup`, the onboarding journey), Under the hood (`#/engine`: architecture, sponsor tech, live call log, data notes). Demo box and sample chat (`src/lib/demo.ts`) let anyone try the whole flow without products.
+- Accuracy findings on Gemini Nano, measured with the sample chat and the demo box:
+  - Questions phrased "visible in the box" were unstable. The compiler now describes items by visible features and never says "in the box".
+  - Mixing "green cover?" and "blue cover?" in one prompt made the second unreliable. `runProbes` now batches positive questions in one call and asks each must-not-be-there question in its own call. About 2.2 s per look.
+  - Open "anything else?" (NO_EXTRAS) questions were wrong 2 of 3 times. The compiler only adds them when the customer explicitly asks.
+  - Result, 4 runs each: right box all PASS 4/4; wrong box blocked 4/4. Remaining weakness: "green cover?" answers yes on the blue notebook in 3 of 4 runs; the ABSENCE check still blocks the parcel. **This is exactly what Tier 5 question validation must catch**: run each probe against the mutant (the blue variant) and route unreliable ones to the cloud.

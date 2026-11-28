@@ -11,11 +11,12 @@ Test types:
 - COUNT: an item must appear exactly N times. Set expectedCount.
 - ATTRIBUTE: an item must have a visible attribute, such as color or pattern. Set attribute name and value.
 - ABSENCE: an item must NOT be in the box. Every time the customer replaces or cancels something, add an ABSENCE test for the old item and list the change in "changes".
-- NO_EXTRAS: nothing outside the order may be in the box. Add exactly one, with a probe that names every ordered item.
+- NO_EXTRAS: nothing outside the order may be in the box. Only add it when the customer explicitly asks that nothing else is included. Small on-device models answer open "anything else?" questions poorly.
 - ATTESTATION: something a camera cannot check (size, material, a note inside packaging, an item inside a closed bag). Use oracle HUMAN and no probes.
 
 Probe rules:
-- One attribute per probe. Name the item and the attribute using visible features from the product photos (color, shape, print, logo).
+- One attribute per probe. Describe the item by what a camera sees (color, shape, print, logo), for example "Is there a notebook with a green cover?" or "Is there a yellow highlighter?".
+- Never write "in the box", "in the parcel" or "visible in the box". The photo already shows the inside of the parcel. Keep each question under 12 words.
 - yesno probes pass on "yes" or "no". ABSENCE and NO_EXTRAS probes always pass on "no".
 - count probes ask "How many ... are visible?" and pass on one of 0, 1, 2, 3, 4+.
 - Use oracle DEVICE by default. Use CLOUD when the item can only be told apart from a similar variant by fine detail, or when more than 3 of it are expected.
@@ -54,7 +55,7 @@ export function probePrompt(probes: Probe[]): string {
       ? `${p.id}: ${p.question} (answer 0, 1, 2, 3, 4+ or unsure)`
       : `${p.id}: ${p.question} (answer yes, no or unsure)`,
   );
-  return `This photo shows an open parcel on a packing table. Answer each question only from what is in the photo.
+  return `This photo looks down into an open parcel. Everything you can see in the photo is inside the parcel. Answer each question only from what is in the photo.
 - Answer yes when you can see the thing asked about.
 - Answer no when you cannot see it anywhere in the photo. Not seeing something is a clear answer: no.
 - Answer unsure only when part of the photo is covered, cut off or too blurry to tell.

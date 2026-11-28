@@ -103,7 +103,7 @@ export function ReceiptView({ id }: { id: string }) {
             </div>
           )}
           <p className="small faint" style={{ textAlign: "center" }}>
-            Receipt {receipt.id}. Checked with Vouch.
+            Receipt {receipt.id}. Checked with Vouch. Every promise deserves proof.
           </p>
         </article>
       )}

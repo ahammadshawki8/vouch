@@ -36,7 +36,7 @@ export function Logo({ size = 30, invert = false, animate = false }: { size?: nu
 
 /** A strip of branded packing tape with repeating print. Used as a ribbon and for the seal moment. */
 export function Tape({
-  words = ["Vouched", "Packed right", "Checked on device", "Works offline", "Proof for every parcel"],
+  words = ["Every promise deserves proof", "Packed right", "Checked on device", "Works offline", "Vouched"],
   tilt = -4,
   moving = true,
   className = "",

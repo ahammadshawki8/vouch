@@ -1,4 +1,5 @@
-import { href } from "../router";
+import { href, type Route } from "../router";
+import { setupDone } from "../lib/demo";
 import { DotArrow, Logo, Sticker, Tape, TapeTick } from "../components/Brand";
 import { PhotoCard } from "../components/PhotoCard";
 import { HowItWorks } from "../components/HowItWorks";
@@ -9,6 +10,11 @@ function jump(id: string) {
     e.preventDefault();
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+}
+
+/** New sellers go through setup first; returning sellers go straight to their orders. */
+function startRoute(): Route {
+  return setupDone() ? { name: "orders" } : { name: "setup" };
 }
 
 /** The public front door. Explains the product in the order a seller would live it. */
@@ -28,10 +34,12 @@ export function Landing() {
           <a href="#/" onClick={jump("hybrid")}>
             On device
           </a>
+          <a href={href({ name: "engine" })}>Technology</a>
         </nav>
         <div className="right">
-          <a className="btn primary" href={href({ name: "orders" })}>
-            Open the packing table
+          <a className="btn primary" href={href(startRoute())}>
+            <span className="hide-sm">Open the packing table</span>
+            <span className="show-sm">Open</span>
             <DotArrow />
           </a>
         </div>
@@ -59,8 +67,8 @@ export function Landing() {
           confirmed on your own device before the parcel leaves.
         </p>
         <div className="hero-cta">
-          <a className="btn primary big" href={href({ name: "new" })}>
-            Check a parcel
+          <a className="btn primary big" href={href({ name: "setup" })}>
+            Start in two minutes
             <DotArrow />
           </a>
           <a className="btn pill big" href="#/" onClick={jump("how")}>
@@ -110,6 +118,13 @@ export function Landing() {
         </div>
         <div className="hero-tape">
           <Tape />
+        </div>
+        <div className="built-on" aria-label="Built on">
+          <span className="built-label">Built on</span>
+          <span className="built-item">Firebase AI Logic</span>
+          <span className="built-item">Gemini</span>
+          <span className="built-item">Gemini Nano in Chrome</span>
+          <span className="built-item">Firebase App Check</span>
         </div>
       </section>
 
@@ -205,8 +220,8 @@ export function Landing() {
             }
           />
         </div>
-        <h2>Every parcel, vouched for.</h2>
-        <a className="btn primary big" href={href({ name: "orders" })}>
+        <h2>Every promise deserves proof.</h2>
+        <a className="btn primary big" href={href(startRoute())}>
           Open the packing table
           <DotArrow />
         </a>
@@ -214,7 +229,12 @@ export function Landing() {
 
       <footer className="footer">
         <Logo size={22} />
-        <span>Built on Firebase AI Logic, Gemini in the cloud and Gemini Nano on device. #BuildHybridAI 2026.</span>
+        <nav className="footer-links" aria-label="Footer">
+          <a href={href({ name: "setup" })}>Setup</a>
+          <a href={href({ name: "orders" })}>Orders</a>
+          <a href={href({ name: "engine" })}>Under the hood</a>
+        </nav>
+        <span>Every promise deserves proof. Built on Firebase AI Logic, Gemini and Gemini Nano. #BuildHybridAI 2026.</span>
       </footer>
     </div>
   );

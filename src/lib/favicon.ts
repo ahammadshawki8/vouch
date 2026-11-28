@@ -31,5 +31,5 @@ export function setTabState(state: TabState, title?: string) {
 }
 
 export function resetTab() {
-  setTabState("brand", "Vouch");
+  setTabState("brand", "Vouch: every promise deserves proof");
 }

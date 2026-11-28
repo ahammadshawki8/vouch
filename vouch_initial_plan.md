@@ -17,7 +17,7 @@
 >
 > The customer gets proof before the parcel arrives.
 
-**Tagline:** *Vouch: every parcel, vouched for.*
+**Tagline:** *Vouch: every promise deserves proof.*
 **Subline:** *Proof that you packed what they asked for.*
 
 ---
@@ -327,4 +327,4 @@ proofs/{unguessableId}      <- public Vouch receipt (items + verdicts only, no p
 >
 > Vouch lets the cloud understand the customer, compile that into checks a small model can trust, and lets the device check every item as it goes into the box, even offline.
 >
-> **Vouch: every parcel, vouched for.**
+> **Vouch: every promise deserves proof.**
