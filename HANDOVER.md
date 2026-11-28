@@ -1,89 +1,112 @@
 # Handover: Part A to Part B
 
-From: Shawki. To: Ashfaq. Read `BUILD_PLAN.md` first; this file explains where things live and what to do next.
+From Shawki to Ashfaq, Nov 28, 2026. Deadline Nov 30, 2:00 PM PT (internal 12:00 PM PT).
+Read this, then `BUILD_PLAN.md` for the checklist. `vouch_initial_plan.md` has the pitch and the benchmark design.
+
+## State in one paragraph
+
+Part A is done. The whole seller journey works end to end with real models: a chat goes to Gemini in the cloud and comes back as a typed checklist, Gemini Nano checks the box on the device, plain code decides, the parcel is sealed and the customer gets a receipt. The site has its brand, a landing page, an onboarding journey, an Under the hood page, a demo box and full mobile layouts. 34 unit tests pass, the build passes. What is left is Part B: question validation, cloud re-checks at seal, Firestore sync, the benchmark and the deploy.
 
 ## Run it
 
 ```
 npm install
-cp .env.example .env.local   # fill in the Firebase web config (ask Shawki for the values)
-npm run dev                  # http://localhost:5173
-npm test                     # unit tests for core logic and the motion gate
-npm run build                # type check + production build
+# get .env.local from Shawki (it is not in git), put it in the repo root
+npm run dev          # http://localhost:5173
+npm test             # 34 unit tests
+npm run build        # type check + production build
 ```
 
-On-device model (Gemini Nano in Chrome):
-1. Chrome desktop 139 or newer.
+Gemini Nano on your machine:
+1. Chrome 139+ on a desktop or laptop.
 2. `chrome://flags/#prompt-api-for-gemini-nano-multimodal-input` set to Enabled, restart Chrome.
-3. In the app, the top-right status says "On-device model not downloaded". Click Download (needs a click, Chrome blocks downloads without one). The status turns to "On-device model ready".
+3. Open `#/setup` in the app and click "Download Gemini Nano". It is a few GB; let it finish.
 
-Development helper: in the browser console run `await vouchSeed()` and reload. It adds a reference order (notebook, pens, highlighter, gift note) so you can open the review and pack screens without a cloud call. This exists only in dev builds.
+Fastest way to see everything working: `#/setup`, then "Try the sample order", "Build the checklist", "Start packing", "Try the demo box". Flip "Packed wrong" and "Packed right", press "I checked this" on any hand check, then "Seal the parcel".
 
-## Map of the code
+Dev console helpers (dev builds only): `await vouchSeed()` adds a reference order without a cloud call; `await vouchSmoke("correct" | "wrong", "device" | "cloud")` runs the reference questions on the demo box and returns answers, verdicts, latency and where it ran.
+
+## Firebase project
+
+| Thing | Value |
+|---|---|
+| Project | `vouch-9315d` (Spark plan, no billing) |
+| Web app | `vouch-web` |
+| Firebase AI Logic | Gemini Developer API, App Check **enforced** |
+| App Check | Fraud Defense (reCAPTCHA Enterprise) key, allowed domains: `localhost`, `vouch-9315d.web.app`, `vouch-9315d.firebaseapp.com` |
+| Cloud model | `gemini-3.5-flash-lite` for compile and cloud checks (override with `VITE_COMPILER_MODEL`, `VITE_CHECK_MODEL`) |
+| Not set up yet | Firestore, Authentication, Hosting (all Part B) |
+
+If App Check rejects calls on a new machine: run on `localhost` (already allowed) or register a debug token in App Check and put it in `VITE_APPCHECK_DEBUG_TOKEN`. The Firebase console only saves a debug token after you press Done.
+
+## Pages
+
+| Route | Screen | Notes |
+|---|---|---|
+| `#/` | Landing | Hero, photos, How it works scenes, Built on strip, people, hybrid panels |
+| `#/setup` | Setup | Onboarding: Chrome, Nano download, camera, first order |
+| `#/orders` | Orders | List with status |
+| `#/new` | New order | Drop screenshots, photos, voice notes or paste chat; "Use the sample chat" |
+| `#/order/:id` | Review | Summary, changes, where each check runs, checklist with DEVICE/CLOUD toggle |
+| `#/pack/:id` | Pack station | Camera or photo or demo box, live checklist, seal |
+| `#/receipt/:id` | Receipt | What the customer sees. Items and verdicts only |
+| `#/engine` | Under the hood | Architecture, sponsor tech, live call log, data notes |
+
+## Code map
 
 | Path | What it does |
 |---|---|
-| `src/core/types.ts` | Domain model: Order, TestSuite, Test, Probe, Oracle, Verdict, Receipt |
-| `src/core/evaluate.ts` | Probe answers to a test verdict on one frame. Pure. |
-| `src/core/smoothing.ts` | 2-of-3 temporal smoothing, `attest`, `override` (use this for cloud re-check results) |
-| `src/core/gate.ts` | Approval gate and `checkLabel`. UNCERTAIN always blocks. |
-| `src/core/validateSuite.ts` | Validates and normalizes compiler output; `deviceProbes(suite)` |
-| `src/core/fixtures.ts` | The reference suite used by tests and `vouchSeed` |
-| `src/firebase/app.ts` | Firebase init, App Check (reCAPTCHA Enterprise, debug token in dev), `getVouchAI()` |
-| `src/ai/models.ts` | `compilerModel` (ONLY_IN_CLOUD), `runtimeModel` (ONLY_ON_DEVICE, or cloud for a session), `checkModel` (ONLY_IN_CLOUD), `warmupModel` |
-| `src/ai/compiler.ts` | Chat sources to a validated TestSuite; one repair retry with the exact validation errors |
-| `src/ai/prompts.ts` | Compiler instructions and the probe prompt |
-| `src/ai/schemas.ts` | Structured output schemas (suite, per-frame answers) |
-| `src/ai/probeRunner.ts` | `runProbes(probes, jpeg, where, purpose)`: all probes on one frame in one call |
-| `src/ai/callLog.ts` | Every model call with `inferenceSource`, latency, purpose. Use it for the benchmark. |
-| `src/ai/device.ts` | On-device availability and download, `useDeviceStatus()` |
-| `src/runtime/motion.ts` | Motion gate (pure, tested): fire on settle, heartbeat when still |
-| `src/runtime/camera.ts` | Camera start/stop, JPEG capture, motion thumbnails; works on video or a still photo |
-| `src/runtime/usePackLoop.ts` | The live loop: motion gate, runProbes, evaluateFrame, smoothing, flash on new failures |
-| `src/runtime/seal.ts` | `sealParcel`: gate check, receipt, order marked vouched. **Part B extends this.** |
-| `src/data/repo.ts` | `Repo` interface + IndexedDB `localRepo`; `setRepo()` to swap in Firestore |
-| `src/screens/*` | Orders, NewOrder, Review, PackStation, ReceiptView |
-| `src/styles/app.css` | All styling and tokens. Read the header comment before adding styles. |
+| `src/core/*` | Pure domain logic with tests: types, probe evaluation, 2-of-3 smoothing, approval gate, `checkLabel`, suite validation |
+| `src/ai/compiler.ts` | Chat sources to a validated `TestSuite`; one repair retry with the exact validation errors |
+| `src/ai/prompts.ts` | Compiler instructions and the on-device question prompt. Read the rules before changing wording; they came from measurements |
+| `src/ai/probeRunner.ts` | `runProbes(probes, jpeg, where, purpose)`. Positive questions in one call, each must-not-be-there question in its own call (`groupProbes`) |
+| `src/ai/models.ts` | `compilerModel`, `runtimeModel` (ONLY_ON_DEVICE, or cloud for a session), `checkModel`, `warmupModel` |
+| `src/ai/device.ts` | Nano availability, download, `warmDevice()` |
+| `src/ai/callLog.ts` | Every model call with source, latency and purpose. Feeds Under the hood and should feed the benchmark |
+| `src/runtime/usePackLoop.ts` | Live loop: motion gate, `runProbes`, `evaluateFrame`, smoothing, flash on new failures |
+| `src/runtime/seal.ts` | `sealParcel`: gate, receipt, order marked vouched. **Tier 6 extends this** |
+| `src/runtime/motion.ts`, `camera.ts` | Motion gate (tested), camera and still-image capture |
+| `src/data/repo.ts` | `Repo` interface, IndexedDB `localRepo`, `setRepo()`. **Tier 7 swaps in Firestore** |
+| `src/lib/demo.ts` | Sample chat, demo box drawing, first-run flags |
+| `src/lib/photos.ts` | Unsplash photos (free license) with credits |
+| `src/lib/favicon.ts` | Tab icon turns green or red with the parcel |
+| `src/screens/*` | One file per page |
+| `src/components/*` | Brand (logo, tape, sticker, dot arrow), PhotoCard, HowItWorks scenes, SealMoment, icons, status bits |
+| `src/styles/*` | `app.css` tokens and core components, `motion.css`, `photos.css`, `how.css`, `pages.css` (setup, engine, mobile) |
 
-## Part B hooks: where each tier plugs in
+## Measured so far (Nov 28, Shawki's laptop)
 
-**Tier 5, question validation.** Add `src/ai/validateProbes.ts`. For each DEVICE test, use `test.referenceSourceIds` (correct item photos) and `test.mutantSourceIds` (wrong variants, already chosen by the compiler) from `order.sources`. Call `runProbes([probe], photo, "device", "validate")` 3 times per photo. Write `test.probeStats[probe.id] = { reliability, runs, rewritten }`, flip unreliable tests to `oracle: "CLOUD"`, set `suite.validated = true`, save the order. The Review screen already shows `probeStats`, the health panel counts and the "validated" sentence; trigger validation from Review (a "Test the questions" button next to Confirm) or automatically after compile. Rewrite loop: send the failing probe and the evidence back through `compilerModel` with a small schema for one probe.
+- Cloud compile of the sample chat: about 3 s, valid suite first try, code-mixed change resolved into an ABSENCE check.
+- On-device look: about 2.2 s (one batch for positive questions plus one call per must-not-be-there question). First call of a session is slower while Nano loads; the pack station warms it on open.
+- Demo box, 4 runs each: packed right, every check PASS 4/4. Packed wrong, parcel blocked 4/4 (blue notebook, pen count and missing card caught every time).
 
-**Tier 6, seal and escalation.** In `sealParcel`: capture 3 fresh frames (PackStation has the source element; pass a capture function in), re-run device probes, then for tests with `oracle === "CLOUD"` or still UNCERTAIN, when `navigator.onLine`, call `runProbes(probes, frame, "cloud", "escalate")` and apply results with `override()`. Offline, leave them UNCERTAIN so the gate blocks. Right now CLOUD tests show "At seal" on the checklist and block sealing until this exists.
+## Accuracy findings you need for Tier 5
 
-**Tier 7, persistence.** Implement `Repo` with Firestore (offline persistence on), call `setRepo(firestoreRepo)` in `main.tsx` after auth. Receipts: public read by id, owner write; never copy `order.sources` into the receipt. The receipt page "Something is not right" currently writes `receipt.flagged` locally; mirror it to the order. Voice notes already flow through `fileToSource` (audio) and `sourcesToParts` (inlineData); test them end to end with the cloud compiler.
+1. Questions phrased "visible in the box" were unstable. The compiler now describes items by visible features and never says "in the box".
+2. Asking "green cover?" and "blue cover?" in one prompt made the second answer unreliable. That is why `groupProbes` isolates every must-not-be-there question.
+3. Open "anything else in the box?" questions (NO_EXTRAS) were wrong 2 of 3 times. The compiler now adds them only when the customer explicitly asks.
+4. **Open weakness:** "Is there a notebook with a green cover?" answers yes on the blue notebook in 3 of 4 runs. The parcel is still blocked by "No blue notebook", but this is exactly what Tier 5 must catch: run each DEVICE probe against the mutant (the blue variant, which the compiler already lists in `mutantSourceIds` when photos are given; the demo box "wrong" image works as a mutant for the sample order) and route unreliable probes to CLOUD.
 
-**Tier 8, benchmark.** `src/ai/callLog.ts` already records source and latency for every call. Configurations A to E map to: A open-ended prompt (new prompt in the bench runner), B `runProbes` on unvalidated suites, C on validated suites, D `runProbes(..., "cloud")`, E the full loop with seal escalation. Put the runner under `bench/` and keep private photos in `bench/data/private` (git-ignored).
+## Part B, in priority order
 
-## State of Part A
+1. **Tier 5 validation.** New `src/ai/validateProbes.ts`. For each DEVICE test, run its probes 3 times on the reference photos (`referenceSourceIds`) and on the mutants (`mutantSourceIds`) with `runProbes(..., "device", "validate")`. Write `test.probeStats[probeId] = { reliability, runs, rewritten }`, move unreliable tests to `oracle: "CLOUD"`, set `suite.validated = true`, save. Review already displays `probeStats`, the where-each-check-runs counts and the validated sentence. Add a "Test the questions" step after compile or on the review screen.
+2. **Tier 6 cloud re-check.** In `sealParcel`, for CLOUD tests and anything still UNCERTAIN, when online: `runProbes(probes, frame, "cloud", "escalate")`, then apply with `override()` from `src/core/smoothing.ts`. Offline they stay UNCERTAIN and block. Until this exists, CLOUD tests show "At seal" and block sealing.
+3. **Tier 7 Firestore.** Implement `Repo` with Firestore (offline persistence on), call `setRepo()` in `main.tsx`. Receipts public by unguessable id, never copy `order.sources` into them. Then add Firestore, Authentication and Hosting to the `TECH` list in `src/screens/Engine.tsx` (it only lists what is live).
+4. **Tier 8 benchmark.** Real photos of real items. Configurations A to E from `vouch_initial_plan.md`. `callLog` already records source and latency.
+5. **Tier 9 deploy.** `firebase deploy --only hosting` with `dist/`. Test on a fresh Chrome profile with the flag on.
 
-- Unit tests: core logic and the motion gate (run `npm test`).
-- Build: `npm run build` passes.
-- UI verified in Chrome with the reference order (orders, review, pack station layouts).
-- Live model calls: see the latest note at the bottom of this file for what has been verified against the real Firebase project.
+## Rules
 
-## Known issues and notes
+- No emoji, no em dashes, no decorative unicode anywhere: code, UI copy, docs, commits.
+- No AI co-author or attribution lines in commits.
+- The model observes, code decides. Never put pass or fail logic in a prompt.
+- UNCERTAIN always blocks the seal.
+- Keep the design system: use the tokens in `src/styles/app.css` and the existing components (`btn primary` with `DotArrow`, `Sticker`, `oracle` tags, `status-tag`). Signal orange is for brand moments, never for status.
+- `npm test` and `npm run build` green before every push.
 
-- Images on-device must be PNG or JPEG; `fileToSource` re-encodes images to JPEG.
-- On-device input limit is about 9216 tokens. One 768px JPEG plus the probe prompt fits; do not send several images per on-device call.
-- On-device has no temperature control; validation repeats each probe 3 times to measure stability.
-- Keep the style rules: no emoji, no em dashes, no decorative unicode anywhere.
+## Known gaps
 
-## Verification log
-
-2026-11-28, Shawki (Part A):
-- Firebase project `vouch-9315d` created. AI Logic on the Gemini Developer API, App Check enforced, web app `vouch-web` registered with Fraud Defense (reCAPTCHA Enterprise). Localhost is an allowed key domain, so local dev uses the real provider; no debug token needed.
-- Cloud compile verified live through the New order screen: code-mixed chat ("notebook ta green kore dao, blue na") produced PRESENCE/COUNT/ABSENCE/ATTESTATION/NO_EXTRAS tests and the blue-to-green change, about 3 s on gemini-3.5-flash-lite.
-- Model timing measured on this project: gemini-3.5-flash-lite about 3 s per compile; gemini-3.8-flash over 90 s; gemini-4-hydrogen 22 s. Defaults are flash-lite; override with VITE_COMPILER_MODEL / VITE_CHECK_MODEL.
-- Cloud probe runner verified with `await vouchSmoke("correct","cloud")` and `("wrong","cloud")`: correct scene all PASS, wrong scene FAIL on wrong notebook, blue notebook present and pen count, PASS on highlighter. 2.6 to 5.5 s per call.
-- On-device (Gemini Nano) download started from the app on Shawki's Chrome; still downloading at handover time (slow connection). The on-device path uses the same `runProbes` code as the verified cloud path with `ONLY_ON_DEVICE`. **First thing to run once Chrome reports the model ready:** `await vouchSmoke("correct")` and `await vouchSmoke("wrong")` in the dev console. Expect `source: "on_device"`, PASS on the correct scene, FAILs on the wrong one, and note the latency. Then try the pack station with "Use a photo instead" and with the camera.
-
-Part A status: complete except the live on-device check above. Tests: `npm test` (33 passing). Build: `npm run build` passes.
-
-2026-11-28, Shawki (UI and accuracy pass):
-- New pages: Setup (`#/setup`, the onboarding journey), Under the hood (`#/engine`: architecture, sponsor tech, live call log, data notes). Demo box and sample chat (`src/lib/demo.ts`) let anyone try the whole flow without products.
-- Accuracy findings on Gemini Nano, measured with the sample chat and the demo box:
-  - Questions phrased "visible in the box" were unstable. The compiler now describes items by visible features and never says "in the box".
-  - Mixing "green cover?" and "blue cover?" in one prompt made the second unreliable. `runProbes` now batches positive questions in one call and asks each must-not-be-there question in its own call. About 2.2 s per look.
-  - Open "anything else?" (NO_EXTRAS) questions were wrong 2 of 3 times. The compiler only adds them when the customer explicitly asks.
-  - Result, 4 runs each: right box all PASS 4/4; wrong box blocked 4/4. Remaining weakness: "green cover?" answers yes on the blue notebook in 3 of 4 runs; the ABSENCE check still blocks the parcel. **This is exactly what Tier 5 question validation must catch**: run each probe against the mutant (the blue variant) and route unreliable ones to the cloud.
+- CLOUD tests block sealing until Tier 6.
+- Orders and receipts live in this browser only (IndexedDB) until Tier 7, so a receipt link does not open on another device yet.
+- Voice notes are wired but not tested end to end.
+- Photos on the landing page load from the Unsplash CDN, so the landing page needs internet. The packing tools do not.

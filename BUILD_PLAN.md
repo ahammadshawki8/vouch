@@ -1,6 +1,8 @@
 # Vouch build plan
 
 Deadline: Nov 30, 2026, 2:00 PM PT. Internal deadline: Nov 30, 12:00 PM PT.
+
+Status on Nov 28: Part A is done and handed to Ashfaq. Suggested timing: Part B through Nov 29, handover back to Shawki by Nov 29 evening, finalize and record the video on the morning of Nov 30.
 Strategy and pitch: see `vouch_initial_plan.md`.
 
 ## Ownership
@@ -44,7 +46,7 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [x] Vite + React + TypeScript app at repo root, strict TS
 - [x] Vitest configured, `npm test` runs
 - [x] Self-hosted font (works offline), design tokens in one CSS file
-- [x] Hash router with routes: orders, new order, order review, pack station, receipt
+- [x] Hash router with routes: landing, setup, orders, new order, order review, pack station, receipt, under the hood
 - [x] `.env.example` with all Firebase keys; `.env.local` git-ignored
 - [x] Firebase app init module, App Check (reCAPTCHA Enterprise, debug token in dev)
 
@@ -57,7 +59,7 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [x] Unit tests for every function above, including the change rule (replacement creates ATTRIBUTE plus ABSENCE)
 
 ### Tier 2. AI layer (cloud compiler)
-- [x] Model factory: cloud compiler model (`ONLY_IN_CLOUD`), runtime model (`ONLY_ON_DEVICE`), escalation model (`ONLY_IN_CLOUD`), each with its own params
+- [x] Model factory: cloud compiler model (`ONLY_IN_CLOUD`), runtime model (`ONLY_ON_DEVICE`), escalation model (`ONLY_IN_CLOUD`), each with its own params. Cloud model is `gemini-3.5-flash-lite` (measured about 3 s per compile; `gemini-3.8-flash` took over 90 s)
 - [x] Device readiness: detect on-device availability, trigger `initializeDeviceModel` from a click, show download progress
 - [x] Compiler: chat screenshots + product photos + pasted text to a typed `TestSuite` with probes (structured JSON output, cloud)
 - [x] Compiler prompt enforces: one attribute per probe, yes/no/unsure answers, counts as choice, replacement creates ABSENCE, invisible attributes become ATTESTATION
@@ -73,12 +75,17 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [x] Seal control and attestation prompts (UI only, logic wired in Part B)
 - [x] Vouched stamp moment (one orchestrated animation, reduced motion respected)
 - [x] Receipt screen: sealed photo, tests with verdict and how each was checked, timestamp, "Something is not right" button (UI only)
-- [x] Responsive down to tablet, keyboard focus visible, contrast checked (breakpoint at 960px in CSS; re-check on a real tablet in Tier 10)
+- [x] Responsive: desktop, tablet and phone (bottom tab bar under 860px), keyboard focus visible, contrast checked
+- [x] Brand identity: tape-tick mark, Funnel Display and Funnel Sans, signal orange for brand only, live favicon, web manifest
+- [x] Landing page with hero, photography, How it works scenes, Built on strip; tagline "Every promise deserves proof."
+- [x] Setup page: onboarding journey (browser, Gemini Nano download, camera, first order)
+- [x] Under the hood page: architecture, sponsor tech in use, live call log, data notes
+- [x] Sample chat and demo box so anyone can try the full flow without products or a webcam
 
 ### Tier 4. On-device runtime
 - [x] Camera capture (getUserMedia), frame grab to JPEG at a fixed size
 - [x] Motion gate: canvas pixel difference; run inference only when the scene settles after a change
-- [x] Probe runner: all DEVICE probes of a suite in one on-device call per frame, JSON constrained answers (verified live in cloud mode; on-device run pending the Nano download, see HANDOVER.md)
+- [x] Probe runner: positive DEVICE probes batched in one on-device call, each must-not-be-there probe in its own call, JSON constrained answers. Verified on Gemini Nano: demo box right 4/4 pass, wrong 4/4 blocked, about 2.2 s per look
 - [x] Frame loop wired into the smoothing state machine and the live checklist
 - [x] Latency and source shown live (median ms per check, DEVICE or CLOUD per call)
 - [x] Local persistence of orders and suites (IndexedDB) behind a repository interface that Part B swaps to Firestore
@@ -91,7 +98,8 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 
 ## Part B (Ashfaq)
 
-### Tier 5. Question validation (mutation testing)
+### Tier 5. Question validation (mutation testing). Start here.
+Why first: on the demo box, "Is there a notebook with a green cover?" answers yes on the blue notebook in 3 of 4 runs. The parcel is still blocked by the absence check, but this is the exact weakness validation exists to catch. See HANDOVER.md.
 - [ ] Positive check: run each DEVICE probe on-device against the reference photo of the correct item, 3 repeats
 - [ ] Mutant check: run each probe against wrong-variant photos (other variants from the chat, the original item before a change), 3 repeats
 - [ ] Reliability score per probe; threshold decides DEVICE vs CLOUD oracle
@@ -99,12 +107,13 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [ ] Health panel filled with real numbers; review screen shows which probes were rewritten or rerouted
 - [ ] (Stretch) generated counterfactual mutant images via Gemini image generation
 
-### Tier 6. Seal, escalation, attestation
+### Tier 6. Seal and escalation
+Note: CLOUD tests currently show "At seal" and block sealing until this tier exists.
 - [ ] Seal: final check on 3 fresh frames
 - [ ] CLOUD oracle tests and still-UNCERTAIN tests go to cloud Gemini with frames plus reference images when online
 - [ ] Offline: those tests stay UNCERTAIN and block; seller can rescan or attest where allowed
-- [ ] ATTESTATION tests require an explicit seller confirmation
-- [ ] On approval: create the receipt record and trigger the Vouched stamp
+- [x] ATTESTATION tests require an explicit seller confirmation (done in Part A: "I checked this")
+- [x] On approval: create the receipt record and trigger the seal moment (done in Part A, `src/runtime/seal.ts`)
 
 ### Tier 7. Persistence, auth, sync, receipts
 - [ ] Firebase Auth (anonymous or Google) for sellers
@@ -112,7 +121,7 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [ ] Public receipt documents with unguessable ids, items and verdicts only, no chat text or personal data
 - [ ] Firestore security rules: sellers own their orders; receipts are public read, owner write
 - [ ] Customer "Something is not right" writes a flag back to the order
-- [ ] Voice notes: audio input to the cloud compiler
+- [ ] Voice notes: the upload and compiler path exist (audio goes to the cloud as inlineData); test end to end with a real voice note and fix anything that breaks
 
 ### Tier 8. Benchmark
 - [ ] Dataset: about 15 orders x about 7 labeled scenes, with planted faults (wrong color, missing, extra, replaced item left in, near-identical swap)
@@ -122,7 +131,7 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 - [ ] Results written to `bench/results.json` and a results table
 
 ### Tier 9. Deploy
-- [ ] Firebase Hosting deploy, App Check enforced on AI Logic
+- [ ] Firebase Hosting deploy (App Check is already enforced on AI Logic and the reCAPTCHA Enterprise key already allows `vouch-9315d.web.app` and `vouch-9315d.firebaseapp.com`)
 - [ ] Public demo URL works on a fresh Chrome profile with the flag enabled
 
 ### Handover B to A
