@@ -1,5 +1,7 @@
 import { href } from "../router";
 import { DotArrow, Logo, Sticker, Tape, TapeTick } from "../components/Brand";
+import { PhotoCard } from "../components/PhotoCard";
+import { PHOTOS } from "../lib/photos";
 
 function jump(id: string) {
   return (e: React.MouseEvent) => {
@@ -37,9 +39,11 @@ export function Landing() {
       <section className="hero" aria-labelledby="hero-title">
         <h1 className="hero-title" id="hero-title">
           {"Packed exactly as they asked.".split(" ").map((w, i) => (
-            <span className="w" key={i} style={{ "--i": i } as React.CSSProperties}>
-              {w}
-              {i < 4 ? " " : ""}
+            <span key={i}>
+              <span className="w" style={{ "--i": i } as React.CSSProperties}>
+                {w}
+              </span>
+              {i < 4 ? " " : null}
             </span>
           ))}
           <span className="anno" style={{ top: "0.1em", right: "-2%" }}>
@@ -61,6 +65,47 @@ export function Landing() {
           <a className="btn pill big" href="#/" onClick={jump("how")}>
             See how it works
           </a>
+        </div>
+        <div className="hero-photos" aria-label="Small sellers at their packing tables">
+          <PhotoCard
+            photo={PHOTOS.artisan}
+            width={340}
+            ratio={1.3}
+            tilt={-6}
+            className="hp-left"
+            eager
+            sticker={
+              <Sticker tilt={-4} tone="paper">
+                Handmade, 12 orders tonight
+              </Sticker>
+            }
+          />
+          <PhotoCard
+            photo={PHOTOS.packer}
+            width={480}
+            ratio={0.78}
+            tilt={1.5}
+            className="hp-center"
+            eager
+            sticker={
+              <Sticker tilt={5} tone="pass">
+                4 of 4 checks
+              </Sticker>
+            }
+          />
+          <PhotoCard
+            photo={PHOTOS.phone}
+            width={320}
+            ratio={1.25}
+            tilt={7}
+            className="hp-right"
+            eager
+            sticker={
+              <Sticker tilt={-6} tone="signal">
+                Order changed in chat
+              </Sticker>
+            }
+          />
         </div>
         <div className="hero-tape">
           <Tape />
@@ -136,6 +181,36 @@ export function Landing() {
         </ol>
       </section>
 
+      <section className="section" aria-labelledby="people-title">
+        <h2 className="statement" id="people-title">
+          Two people trust every parcel. <span className="soft">Vouch gives both of them something to hold on to.</span>
+        </h2>
+        <div className="people">
+          <div className="person reveal">
+            <PhotoCard photo={PHOTOS.phone} width={620} ratio={0.8} tilt={-1.5} />
+            <div className="person-copy">
+              <span className="oracle device">The seller</span>
+              <h3>Packs at night, alone, from a chat.</h3>
+              <p>
+                No catalogue, no barcodes, orders that change halfway through. Vouch keeps track of every change and
+                checks the box while she packs, so a tired mistake never leaves the table.
+              </p>
+            </div>
+          </div>
+          <div className="person reveal">
+            <PhotoCard photo={PHOTOS.handover} width={620} ratio={0.8} tilt={1.5} />
+            <div className="person-copy">
+              <span className="oracle human">The customer</span>
+              <h3>Sees proof before the parcel arrives.</h3>
+              <p>
+                A photo of the sealed box and every check, shared as a link. If something is not as asked, they can say
+                so while there is still time to fix it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section" id="hybrid" aria-labelledby="hybrid-title">
         <h2 className="statement" id="hybrid-title">
           The cloud writes the checks. <span className="soft">The device runs them, thousands of times, for free.</span>
@@ -177,6 +252,19 @@ export function Landing() {
       </div>
 
       <section className="closing">
+        <div className="closing-photo">
+          <PhotoCard
+            photo={PHOTOS.unboxing}
+            width={300}
+            ratio={1}
+            tilt={-5}
+            sticker={
+              <Sticker tilt={6} tone="pass">
+                Packed as asked
+              </Sticker>
+            }
+          />
+        </div>
         <h2>Every parcel, vouched for.</h2>
         <a className="btn primary big" href={href({ name: "orders" })}>
           Open the packing table

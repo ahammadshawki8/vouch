@@ -5,6 +5,8 @@ import { go, href, type Route } from "../router";
 import { StatusTag, timeAgo } from "../components/bits";
 import { DotArrow, TapeTick } from "../components/Brand";
 import { ArrowIcon } from "../components/Icons";
+import { PhotoCard } from "../components/PhotoCard";
+import { PHOTOS } from "../lib/photos";
 
 function destination(o: Order): Route {
   if (o.status === "vouched" && o.receiptId) return { name: "receipt", id: o.receiptId };
@@ -52,6 +54,9 @@ export function Orders() {
           <span className="bg-tick">
             <TapeTick size={360} />
           </span>
+          <div className="empty-photo">
+            <PhotoCard photo={PHOTOS.artisan} width={280} ratio={1.2} tilt={5} />
+          </div>
         </div>
       ) : (
         <ul className="order-list">
