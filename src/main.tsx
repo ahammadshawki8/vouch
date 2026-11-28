@@ -5,6 +5,7 @@ import "@fontsource-variable/funnel-sans/index.css";
 import "./styles/app.css";
 import "./styles/motion.css";
 import "./styles/photos.css";
+import "./styles/how.css";
 import { App } from "./App";
 
 if (import.meta.env.DEV) {

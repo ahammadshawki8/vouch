@@ -1,6 +1,7 @@
 import { href } from "../router";
 import { DotArrow, Logo, Sticker, Tape, TapeTick } from "../components/Brand";
 import { PhotoCard } from "../components/PhotoCard";
+import { HowItWorks } from "../components/HowItWorks";
 import { PHOTOS } from "../lib/photos";
 
 function jump(id: string) {
@@ -117,68 +118,7 @@ export function Landing() {
           A barcode knows what a product is. <span className="soft">It has no idea what your customer asked for.</span>
         </h2>
 
-        <ol className="steps">
-          <li className="step reveal">
-            <div className="step-top">
-              <span className="step-index">1</span>
-              <span className="oracle cloud">Cloud</span>
-            </div>
-            <h3>Read the chat once</h3>
-            <div className="step-visual">
-              <span className="chat-line struck">one blue notebook</span>
-              <span className="chat-line">wait, make it green</span>
-              <span className="chat-line">2 black pens + a highlighter</span>
-            </div>
-            <p>
-              Screenshots, voice notes, any mix of languages. Gemini works out the final order, including what must not
-              go in the box.
-            </p>
-          </li>
-          <li className="step reveal">
-            <div className="step-top">
-              <span className="step-index">2</span>
-              <span className="oracle device">On device</span>
-            </div>
-            <h3>Check the box live</h3>
-            <div className="step-visual">
-              <div className="q-line">
-                <span>Green notebook visible?</span>
-                <span className="yes">yes</span>
-              </div>
-              <div className="q-line">
-                <span>Blue notebook visible?</span>
-                <span className="no">no</span>
-              </div>
-              <div className="q-line">
-                <span>How many black pens?</span>
-                <b>2</b>
-              </div>
-            </div>
-            <p>
-              Gemini Nano answers small, pre-tested questions on every settled camera frame. No cost per frame, no
-              internet needed.
-            </p>
-          </li>
-          <li className="step reveal">
-            <div className="step-top">
-              <span className="step-index">3</span>
-              <span className="oracle human">Customer</span>
-            </div>
-            <h3>Send proof, not promises</h3>
-            <div className="step-visual" style={{ alignContent: "center", justifyItems: "start" }}>
-              <Sticker tilt={-4} tone="pass">
-                Vouched, 4 of 4 checks
-              </Sticker>
-              <span className="muted small" style={{ marginTop: 8 }}>
-                Sealed photo and every check, shared as a link
-              </span>
-            </div>
-            <p>
-              The customer sees the sealed box and every check before it arrives, and can flag a problem while there is
-              still time to fix it.
-            </p>
-          </li>
-        </ol>
+        <HowItWorks />
       </section>
 
       <section className="section" aria-labelledby="people-title">
