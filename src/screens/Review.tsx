@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Oracle, Order, Test, TestType } from "../core/types";
+import type { Oracle, Order, Test, TestSuite, TestType, TestValidation } from "../core/types";
 import { validateSuite } from "../core/validateSuite";
 import { checkLabel } from "../core/gate";
 import { repo } from "../data/repo";
@@ -7,6 +7,7 @@ import { dataUrl } from "../lib/files";
 import { go } from "../router";
 import { OracleTag, StatusTag } from "../components/bits";
 import { DotArrow, Sticker } from "../components/Brand";
+import { QuestionTest } from "../components/QuestionTest";
 
 const TYPE_TEXT: Record<TestType, string> = {
   PRESENCE: "Must be in the box",
@@ -15,6 +16,13 @@ const TYPE_TEXT: Record<TestType, string> = {
   ABSENCE: "Must not be in the box",
   NO_EXTRAS: "Nothing extra",
   ATTESTATION: "You confirm by hand",
+};
+
+const VALIDATION_TEXT: Record<TestValidation, string> = {
+  passed: "Tested on the photos",
+  rewritten: "Rewritten after testing",
+  rerouted: "Moved to the cloud after testing",
+  untested: "No photo to test on",
 };
 
 export function Review({ id }: { id: string }) {
@@ -48,6 +56,12 @@ export function Review({ id }: { id: string }) {
     const next = { ...order, suite: { ...suite, tests } };
     setOrder(next);
     await repo().saveOrder(next);
+  };
+  const saveSuite = async (next: TestSuite) => {
+    const latest = (await repo().getOrder(order.id)) ?? order;
+    const updated = { ...latest, suite: next };
+    setOrder(updated);
+    await repo().saveOrder(updated);
   };
   const removeTest = (tid: string) => save(suite.tests.filter((t) => t.id !== tid));
   const setOracle = (tid: string, oracle: Oracle) =>
@@ -170,8 +184,8 @@ export function Review({ id }: { id: string }) {
               <h2 id="where-title">Where each check runs</h2>
               <span className="small muted">
                 {suite.validated
-                  ? "Every on-device question was tested against the right item and the wrong variants."
-                  : "Questions are tested against the product photos before packing."}
+                  ? "On-device questions were tested on the right item and the wrong variants."
+                  : "Test the questions on the product photos before you pack."}
               </span>
             </div>
             <div className="where-strip">
@@ -192,6 +206,7 @@ export function Review({ id }: { id: string }) {
                 <span className="muted">confirmed by you</span>
               </div>
             </div>
+            <QuestionTest order={order} onDone={saveSuite} />
           </section>
 
           <section className="block" aria-labelledby="checks-title">
@@ -206,6 +221,7 @@ export function Review({ id }: { id: string }) {
                     <h4>{checkLabel(t)}</h4>
                     <div className="kind">
                       <span>{TYPE_TEXT[t.type]}</span>
+                      {t.validation && <span className={`vtag ${t.validation}`}>{VALIDATION_TEXT[t.validation]}</span>}
                       <span className="quote">{t.evidence}</span>
                     </div>
                     {t.probes.length > 0 && (

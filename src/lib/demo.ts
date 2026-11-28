@@ -7,10 +7,37 @@
 export const SAMPLE_TITLE = "Maya, stationery gift";
 
 export const SAMPLE_CHAT = `Maya: hi! is the A5 notebook still available?
-Shop: yes! blue, green or black
+Shop: yes! blue, green or black (sent 3 photos)
 Maya: one blue notebook, two black pens and a yellow highlighter pls
 Maya: wait, notebook ta green kore dao, blue na
 Maya: its a gift, can you add a small thank-you card?`;
+
+export type NotebookColor = "blue" | "green" | "black";
+const NOTEBOOK_FILL: Record<NotebookColor, string> = { blue: "#2457b8", green: "#2e8b3d", black: "#1d1d1f" };
+
+/**
+ * The product photos the shop sent in the sample chat: the same A5 notebook in three colors, drawn
+ * like the notebook in the demo box. Question validation tests the notebook questions on them.
+ */
+export function drawNotebookPhoto(color: NotebookColor): string {
+  const c = document.createElement("canvas");
+  c.width = 640;
+  c.height = 480;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#ece6dd";
+  g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = "rgba(0, 0, 0, 0.12)";
+  g.fillRect(208, 78, 240, 330);
+  g.fillStyle = NOTEBOOK_FILL[color];
+  g.fillRect(200, 70, 240, 330);
+  g.fillStyle = "#e8e8e8";
+  for (let y = 88; y < 390; y += 22) g.fillRect(190, y, 22, 8);
+  g.fillStyle = "#ffffff";
+  g.fillRect(250, 120, 150, 40);
+  return c.toDataURL("image/jpeg", 0.9);
+}
+
+export const SAMPLE_PHOTOS: NotebookColor[] = ["blue", "green", "black"];
 
 export type DemoVariant = "right" | "wrong";
 

@@ -1,6 +1,7 @@
 import type { Part } from "firebase/ai";
 import type { Source, TestSuite } from "../core/types";
 import { validateSuite } from "../core/validateSuite";
+import { shareSiblingPhotos } from "../core/validation";
 import { COMPILER_MODEL } from "../firebase/app";
 import { timed } from "./callLog";
 import { compilerModel } from "./models";
@@ -62,7 +63,7 @@ export async function compileOrder(sources: Source[]): Promise<CompileResult> {
     );
     lastErrors = [...checked.errors, ...refErrors];
     if (lastErrors.length === 0 || attempt === 2) {
-      return { suite: dropUnknownRefs(checked.suite, knownIds), warnings: lastErrors, attempts: attempt };
+      return { suite: shareSiblingPhotos(dropUnknownRefs(checked.suite, knownIds)), warnings: lastErrors, attempts: attempt };
     }
     parts = [...base, { type: "text", text: value }, { type: "text", text: repairInstructions(lastErrors) }];
   }

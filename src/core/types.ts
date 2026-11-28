@@ -56,6 +56,29 @@ export interface Test {
   /** Source ids of product photos that show a wrong variant. Used as mutants by question validation. */
   mutantSourceIds?: string[];
   probeStats?: Record<string, ProbeStats>;
+  /** Outcome of question validation for this test. Absent until validation has run. */
+  validation?: TestValidation;
+}
+
+/**
+ * passed: every question was reliable first time.
+ * rewritten: a question failed, the cloud rewrote it, and the rewrite was reliable.
+ * rerouted: still unreliable after the rewrite, so the cloud checks this test.
+ * untested: no product photo to test against; stays where the compiler put it.
+ */
+export type TestValidation = "passed" | "rewritten" | "rerouted" | "untested";
+
+/** Numbers from one question validation run, shown on the review screen. */
+export interface ValidationReport {
+  at: number;
+  /** On-device looks made, across all photos and repeats. */
+  looks: number;
+  /** Median time of one on-device look in ms. */
+  medianMs: number;
+  passed: number;
+  rewritten: number;
+  rerouted: number;
+  untested: number;
 }
 
 /** A change the customer made during the conversation, e.g. blue notebook to green notebook. */
@@ -76,6 +99,7 @@ export interface TestSuite {
   compilerModel: string;
   /** True once question validation (mutation testing) has run. */
   validated: boolean;
+  validation?: ValidationReport;
 }
 
 export type SourceKind = "screenshot" | "product" | "text" | "audio";

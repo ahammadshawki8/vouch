@@ -24,7 +24,7 @@ Gemini Nano on your machine:
 
 Fastest way to see everything working: `#/setup`, then "Try the sample order", "Build the checklist", "Start packing", "Try the demo box". Flip "Packed wrong" and "Packed right", press "I checked this" on any hand check, then "Seal the parcel".
 
-Dev console helpers (dev builds only): `await vouchSeed()` adds a reference order without a cloud call; `await vouchSmoke("correct" | "wrong", "device" | "cloud")` runs the reference questions on the demo box and returns answers, verdicts, latency and where it ran.
+Dev console helpers (dev builds only): `await vouchSeed()` adds a reference order without a cloud call; `await vouchSmoke("correct" | "wrong", "device" | "cloud")` runs the reference questions on the demo box and returns answers, verdicts, latency and where it ran. `await vouchValidate()` runs question validation on the reference suite against the sample notebook photos and returns the report and each test's result.
 
 ## Firebase project
 
@@ -46,8 +46,8 @@ If App Check rejects calls on a new machine: run on `localhost` (already allowed
 | `#/` | Landing | Hero, photos, How it works scenes, Built on strip, people, hybrid panels |
 | `#/setup` | Setup | Onboarding: Chrome, Nano download, camera, first order |
 | `#/orders` | Orders | List with status |
-| `#/new` | New order | Drop screenshots, photos, voice notes or paste chat; "Use the sample chat" |
-| `#/order/:id` | Review | Summary, changes, where each check runs, checklist with DEVICE/CLOUD toggle |
+| `#/new` | New order | Drop screenshots, photos, voice notes or paste chat; "Use the sample order" (chat plus three notebook photos) |
+| `#/order/:id` | Review | Summary, changes, where each check runs, "Test the questions", checklist with DEVICE/CLOUD toggle and test results |
 | `#/pack/:id` | Pack station | Camera or photo or demo box, live checklist, seal |
 | `#/receipt/:id` | Receipt | What the customer sees. Items and verdicts only |
 | `#/engine` | Under the hood | Architecture, sponsor tech, live call log, data notes |
@@ -59,6 +59,9 @@ If App Check rejects calls on a new machine: run on `localhost` (already allowed
 | `src/core/*` | Pure domain logic with tests: types, probe evaluation, 2-of-3 smoothing, approval gate, `checkLabel`, suite validation |
 | `src/ai/compiler.ts` | Chat sources to a validated `TestSuite`; one repair retry with the exact validation errors |
 | `src/ai/prompts.ts` | Compiler instructions and the on-device question prompt. Read the rules before changing wording; they came from measurements |
+| `src/core/validation.ts` | Question validation scoring (pure, tested): photo cases, scoring, 90% reliability threshold, failure text for the rewrite |
+| `src/ai/validateProbes.ts` | Question validation run: 3 looks per photo on Nano, one cloud rewrite of failing questions, retest, reroute to CLOUD |
+| `src/components/QuestionTest.tsx` | The "Test the questions" panel on the review screen |
 | `src/ai/probeRunner.ts` | `runProbes(probes, jpeg, where, purpose)`. Positive questions in one call, each must-not-be-there question in its own call (`groupProbes`) |
 | `src/ai/models.ts` | `compilerModel`, `runtimeModel` (ONLY_ON_DEVICE, or cloud for a session), `checkModel`, `warmupModel` |
 | `src/ai/device.ts` | Nano availability, download, `warmDevice()` |
@@ -89,7 +92,7 @@ If App Check rejects calls on a new machine: run on `localhost` (already allowed
 
 ## Part B, in priority order
 
-1. **Tier 5 validation.** New `src/ai/validateProbes.ts`. For each DEVICE test, run its probes 3 times on the reference photos (`referenceSourceIds`) and on the mutants (`mutantSourceIds`) with `runProbes(..., "device", "validate")`. Write `test.probeStats[probeId] = { reliability, runs, rewritten }`, move unreliable tests to `oracle: "CLOUD"`, set `suite.validated = true`, save. Review already displays `probeStats`, the where-each-check-runs counts and the validated sentence. Add a "Test the questions" step after compile or on the review screen.
+1. **Tier 5 validation. Done Nov 28.** Review screen "Test the questions". On Nano the sample order moved one notebook check to the cloud after a failed rewrite, so the sample order now needs Tier 6 to seal.
 2. **Tier 6 cloud re-check.** In `sealParcel`, for CLOUD tests and anything still UNCERTAIN, when online: `runProbes(probes, frame, "cloud", "escalate")`, then apply with `override()` from `src/core/smoothing.ts`. Offline they stay UNCERTAIN and block. Until this exists, CLOUD tests show "At seal" and block sealing.
 3. **Tier 7 Firestore.** Implement `Repo` with Firestore (offline persistence on), call `setRepo()` in `main.tsx`. Receipts public by unguessable id, never copy `order.sources` into them. Then add Firestore, Authentication and Hosting to the `TECH` list in `src/screens/Engine.tsx` (it only lists what is live).
 4. **Tier 8 benchmark.** Real photos of real items. Configurations A to E from `vouch_initial_plan.md`. `callLog` already records source and latency.

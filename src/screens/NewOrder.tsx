@@ -6,7 +6,7 @@ import { dataUrl, fileToSource, textSource } from "../lib/files";
 import { newId, repo } from "../data/repo";
 import { go } from "../router";
 import { DotArrow, Sticker } from "../components/Brand";
-import { SAMPLE_CHAT, SAMPLE_TITLE, takeSample } from "../lib/demo";
+import { SAMPLE_CHAT, SAMPLE_PHOTOS, SAMPLE_TITLE, drawNotebookPhoto, takeSample } from "../lib/demo";
 
 const KIND_TEXT: Record<SourceKind, string> = {
   screenshot: "Chat screenshot",
@@ -29,6 +29,16 @@ export function NewOrder() {
   const useSample = () => {
     setTitle(SAMPLE_TITLE);
     setChat(SAMPLE_CHAT);
+    setFiles(
+      SAMPLE_PHOTOS.map((color, i) => ({
+        id: `S${i + 1}`,
+        kind: "product",
+        name: `notebook-${color}.jpg`,
+        mimeType: "image/jpeg",
+        data: drawNotebookPhoto(color).split(",")[1],
+      })),
+    );
+    counter.current = SAMPLE_PHOTOS.length + 1;
   };
   useEffect(() => {
     if (takeSample()) useSample();
@@ -206,7 +216,7 @@ export function NewOrder() {
             <div className="label-row">
               <label htmlFor="chat">Or paste the messages</label>
               <button type="button" className="text-btn" onClick={useSample}>
-                Use the sample chat
+                Use the sample order
               </button>
             </div>
             <textarea

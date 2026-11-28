@@ -1,4 +1,4 @@
-import type { Probe, Source } from "../core/types";
+import type { Probe, Source, Test } from "../core/types";
 
 export const COMPILER_INSTRUCTIONS = `You turn a customer conversation from a small online shop into an acceptance test suite for the physical parcel.
 
@@ -23,7 +23,13 @@ Probe rules:
 - Ids: tests t1, t2, ...; probes p1, p2, ... unique across the whole suite.
 
 Product photos:
-- Each photo has a source id. For each test, list in referenceSourceIds the photos that show the correct item, and in mutantSourceIds the photos that show a wrong variant of the same item (for example the color the customer changed away from).
+- Each photo has a source id. Your probes are tested on these photos before packing, so link them carefully.
+- referenceSourceIds: photos on which the test must pass. mutantSourceIds: photos on which the test must fail.
+- PRESENCE and ATTRIBUTE: references show the right item, mutants show a wrong variant of it (for example the color the customer changed away from, or another color the shop offered).
+- ABSENCE: the other way round. The photo of the cancelled or replaced item is a mutant; photos of the item that took its place are references.
+- COUNT: only list a photo as a reference if it shows exactly the expected number.
+- Example: the shop sent S1 blue notebook, S2 green notebook, S3 black notebook, and the customer changed blue to green. "Green notebook" gets references [S2] and mutants [S1, S3]. "No blue notebook" gets references [S2] and mutants [S1].
+- Fill both lists for every test. Use an empty list only when no photo fits.
 
 Evidence: for every test, quote the words from the conversation that justify it, in the original language.
 
@@ -63,4 +69,25 @@ export function probePrompt(probes: Probe[]): string {
 ${lines.join("\n")}
 
 Reply with JSON that maps each question id to its answer.`;
+}
+
+export const REWRITE_INSTRUCTIONS = `You wrote yes or no questions that a small on-device vision model answers about a photo of an open parcel. Before packing, the questions were tested on product photos from the chat. On a photo of the right item a test must pass; on a photo of a wrong variant it must fail. The questions below gave wrong answers. The failures and the photos follow.
+
+Rewrite the questions of each listed test so the small model answers them correctly on these photos.
+- Keep the meaning of the test. Do not change what must or must not be in the box.
+- Look at the photos and name the one visible feature that tells the right item apart from the wrong variant: color, print, shape, logo or text on it.
+- One feature per question, under 12 words. Never write "in the box" or "in the parcel".
+- yesno questions pass on "yes" or "no". For ABSENCE tests they always pass on "no".
+- count questions ask "How many ... are visible?" and pass on 0, 1, 2, 3 or 4+.
+- Prefer one question per test. Use two at most.
+- Answer for every listed test id.`;
+
+export function describeFailedTest(t: Test, failures: string[]): string {
+  const attr = t.attribute ? `, ${t.attribute.name} ${t.attribute.value}` : "";
+  const qs = t.probes.map((p) => `${p.id}: ${p.question} (${p.kind}, passes on ${p.pass})`).join("\n");
+  return `Test ${t.id}: ${t.type} "${t.label}" (item ${t.item}${attr}). From the chat: "${t.evidence}".
+Current questions:
+${qs}
+What went wrong:
+- ${failures.join("\n- ")}`;
 }

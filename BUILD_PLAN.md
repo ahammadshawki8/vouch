@@ -100,11 +100,12 @@ The build work is split 50/50. Documentation, the video and the Devpost submissi
 
 ### Tier 5. Question validation (mutation testing). Start here.
 Why first: on the demo box, "Is there a notebook with a green cover?" answers yes on the blue notebook in 3 of 4 runs. The parcel is still blocked by the absence check, but this is the exact weakness validation exists to catch. See HANDOVER.md.
-- [ ] Positive check: run each DEVICE probe on-device against the reference photo of the correct item, 3 repeats
-- [ ] Mutant check: run each probe against wrong-variant photos (other variants from the chat, the original item before a change), 3 repeats
-- [ ] Reliability score per probe; threshold decides DEVICE vs CLOUD oracle
-- [ ] Rewrite loop: failed probe plus failure evidence goes back to the cloud compiler once, then retest
-- [ ] Health panel filled with real numbers; review screen shows which probes were rewritten or rerouted
+Done Nov 28. Sample order on Gemini Nano: 18 looks at 5.4 s each; 1 check passed first time, 1 failed on the wrong-variant photo, was rewritten once, failed again and moved to the cloud. Pens and highlighter have no photo in the sample, so they stay untested.
+- [x] Positive check: run each DEVICE probe on-device against the reference photo of the correct item, 3 repeats
+- [x] Mutant check: run each probe against wrong-variant photos (other variants from the chat, the original item before a change), 3 repeats
+- [x] Reliability score per probe; threshold decides DEVICE vs CLOUD oracle
+- [x] Rewrite loop: failed probe plus failure evidence goes back to the cloud compiler once, then retest
+- [x] Health panel filled with real numbers; review screen shows which probes were rewritten or rerouted
 - [ ] (Stretch) generated counterfactual mutant images via Gemini image generation
 
 ### Tier 6. Seal and escalation

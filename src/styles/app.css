@@ -1193,6 +1193,40 @@ textarea {
   border-radius: var(--r-pill);
   background: var(--paper-2);
 }
+.vtag {
+  font-size: 12px;
+  font-weight: 650;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+  color: var(--ink-2);
+}
+.vtag.passed {
+  background: var(--pass-soft);
+  color: var(--pass);
+}
+.vtag.rerouted {
+  color: #2b4fc9;
+}
+.vtag.untested {
+  color: var(--ink-3);
+}
+.qt {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+.qt-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.qt-row p {
+  flex: 1 1 280px;
+  margin: 0;
+}
 .add-row {
   display: flex;
   gap: 10px;

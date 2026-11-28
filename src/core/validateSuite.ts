@@ -102,7 +102,7 @@ export function keyWords(phrase: string): string[] {
     .map((w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w));
 }
 
-function checkProbe(p: Probe, where: string, type: TestType, errors: string[]) {
+export function checkProbe(p: Probe, where: string, type: TestType, errors: string[]) {
   if (!p.id) errors.push(`${where}: probe without id.`);
   if (!p.question || p.question.length < 8) errors.push(`${where}: probe ${p.id} has no usable question.`);
   if (p.kind === "yesno") {

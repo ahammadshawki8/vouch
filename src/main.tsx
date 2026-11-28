@@ -11,7 +11,7 @@ import { App } from "./App";
 
 if (import.meta.env.DEV) {
   void import("./dev").then((m) => {
-    Object.assign(window, { vouchSeed: m.seedReferenceOrder, vouchSmoke: m.smokeTest });
+    Object.assign(window, { vouchSeed: m.seedReferenceOrder, vouchSmoke: m.smokeTest, vouchValidate: m.validateReference });
   });
 }
 

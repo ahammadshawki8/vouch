@@ -1,4 +1,5 @@
 import type { Probe } from "../core/types";
+import { isNegativeProbe as isNegative } from "../core/validation";
 import { timed, type CallPurpose, type CallRecord } from "./callLog";
 import { runtimeModel } from "./models";
 import { probePrompt } from "./prompts";
@@ -43,8 +44,6 @@ export async function runProbes(
   }
   return { answers, record: { ...(last as CallRecord), ms } };
 }
-
-const isNegative = (p: Probe) => p.kind === "yesno" && p.pass === "no";
 
 /** One batch for positive questions, then one call per negative question. */
 export function groupProbes(probes: Probe[]): Probe[][] {

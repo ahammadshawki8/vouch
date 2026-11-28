@@ -25,15 +25,15 @@ export function suiteSchema(): ObjectSchema {
       oracle: Schema.enumString({ enum: ["DEVICE", "CLOUD", "HUMAN"] }),
       referenceSourceIds: Schema.array({
         items: Schema.string(),
-        description: "Ids of product photos that show the correct item",
+        description: "Ids of product photos on which this test must pass",
       }),
       mutantSourceIds: Schema.array({
         items: Schema.string(),
-        description: "Ids of product photos that show a wrong variant of this item",
+        description: "Ids of product photos on which this test must fail (a wrong variant)",
       }),
       probes: Schema.array({ items: probe }),
     },
-    optionalProperties: ["expectedCount", "attribute", "referenceSourceIds", "mutantSourceIds"],
+    optionalProperties: ["expectedCount", "attribute"],
   });
   return Schema.object({
     properties: {
@@ -58,4 +58,27 @@ export function answersSchema(probes: Probe[]): ObjectSchema {
     });
   }
   return Schema.object({ properties });
+}
+
+/** Structured output for the cloud rewrite of questions that failed validation. */
+export function rewriteSchema(): ObjectSchema {
+  const probe = Schema.object({
+    properties: {
+      kind: Schema.enumString({ enum: ["yesno", "count"] }),
+      question: Schema.string({ description: "One short visual question about a single feature" }),
+      pass: Schema.string({ description: "Answer that means the probe passes: yes, no, 0, 1, 2, 3 or 4+" }),
+    },
+  });
+  return Schema.object({
+    properties: {
+      tests: Schema.array({
+        items: Schema.object({
+          properties: {
+            id: Schema.string({ description: "The test id, e.g. t1" }),
+            probes: Schema.array({ items: probe }),
+          },
+        }),
+      }),
+    },
+  });
 }
