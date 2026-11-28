@@ -53,7 +53,7 @@ Asking a small on-device model "list every item in this photo with its color and
 |---|---|---|
 | Frequency | Once per order | Continuously, on every frame where something changed |
 | Input | Chat screenshots, voice notes, product photos | Live camera frames |
-| Task | Understand what the customer wants → write typed tests → write **yes/no questions** for Nano → **test those questions** → choose the checker for each test | Answer simple yes/no or multiple-choice questions |
+| Task | Understand what the customer wants -> write typed tests -> write **yes/no questions** for Nano -> **test those questions** -> choose the checker for each test | Answer simple yes/no or multiple-choice questions |
 | Why here | Needs a large multimodal model, multilingual reasoning, and audio | Must be free per frame, instant, offline, and private |
 
 **The big model writes programs the small model can run reliably.** Each order produces a small verification program made of typed tests and pre-tested questions, which runs at the packing table without an internet connection.
@@ -128,13 +128,13 @@ Deterministic checker (pure TypeScript):
    per-test state machine with smoothing: a test changes state only after 2 of the last 3 checks agree
    │
    ▼
-Live checklist UI:  ✓ green  ✗ red  ? uncertain   + indicator per test: DEVICE / CLOUD / HUMAN
+Live checklist UI:  green  x red  ? uncertain   + indicator per test: DEVICE / CLOUD / HUMAN
    │
    ▼
-"Seal parcel" → final check on 3 frames
-   ├── tests checked by the cloud, or still uncertain, and we're online  → cloud re-check
-   ├── offline                                                           → UNCERTAIN blocks; rescan or seller confirms
-   └── every test PASS or ATTESTED                                       → VOUCHED ✓ → Vouch receipt
+"Seal parcel" -> final check on 3 frames
+   |-- tests checked by the cloud, or still uncertain, and we're online  -> cloud re-check
+   |-- offline                                                           -> UNCERTAIN blocks; rescan or seller confirms
+   `-- every test PASS or ATTESTED                                       -> VOUCHED -> Vouch receipt
 ```
 
 **Why on-device is essential here, not optional:** streaming every frame to a cloud model costs too much and is too slow. On-device inference costs nothing per frame, which is what makes **continuous** checking practical at all. That's the answer to the judges' question "why not just use the cloud?"
@@ -150,7 +150,7 @@ Live checklist UI:  ✓ green  ✗ red  ? uncertain   + indicator per test: DEVI
 Every approved parcel produces a **Vouch receipt** the seller can share in chat:
 
 - the photo of the box when it was sealed;
-- the list of tests, each with ✓ and how it was checked (on-device / cloud / seller-confirmed);
+- the list of tests, each with and how it was checked (on-device / cloud / seller-confirmed);
 - a timestamp and an unguessable link;
 - a **"Something's not right?"** button the customer can tap *before* delivery. It also catches cases where the AI misread the chat, which no camera can.
 
@@ -190,7 +190,7 @@ The key claim we must prove: **compiled and tested questions make on-device chec
   - Cloud calls per parcel
   - Estimated cost per 1,000 parcels
 
-**The result we hope for:** A → C shows that compiling makes on-device checking much more accurate, and E shows close to cloud-level accuracy with a small fraction of the cloud calls. **If the numbers come out differently, we publish them anyway and explain what they mean.**
+**The result we hope for:** A -> C shows that compiling makes on-device checking much more accurate, and E shows close to cloud-level accuracy with a small fraction of the cloud calls. **If the numbers come out differently, we publish them anyway and explain what they mean.**
 
 ### 6.2 Understanding chats
 
@@ -207,9 +207,9 @@ The deterministic checker, the state machine and the approval gate get full unit
 
 | Component | Technology | Role |
 |---|---|---|
-| Compiler | Firebase AI Logic → cloud Gemini | Understanding chats, screenshots, voice notes and photos; generating tests and questions; rewriting failed questions; cloud checking |
-| Runtime | Firebase AI Logic → on-device Gemini Nano (Chrome) | Answering questions on live frames; testing questions against mutants |
-| Mutant generation *(stretch goal)* | Firebase AI Logic → Gemini image generation | Counterfactual images of wrong variants |
+| Compiler | Firebase AI Logic -> cloud Gemini | Understanding chats, screenshots, voice notes and photos; generating tests and questions; rewriting failed questions; cloud checking |
+| Runtime | Firebase AI Logic -> on-device Gemini Nano (Chrome) | Answering questions on live frames; testing questions against mutants |
+| Mutant generation *(stretch goal)* | Firebase AI Logic -> Gemini image generation | Counterfactual images of wrong variants |
 | Data | Cloud Firestore (with offline persistence) | Orders, test suites, verification records; syncs when back online |
 | Accounts | Firebase Authentication | Seller accounts |
 | Security | Firebase App Check (**required**) | Protects the AI endpoints |
@@ -221,10 +221,10 @@ The deterministic checker, the state machine and the approval gate get full unit
 **Firestore data model (sketch):**
 ```
 sellers/{sellerId}
-orders/{orderId}            ← source chat assets (screenshots, voice notes, photos)
-  suite                     ← typed tests + questions + checker per test + health score
-  scans/{scanId}            ← per-check results (local first, synced later)
-proofs/{unguessableId}      ← public Vouch receipt (items + verdicts only, no personal data)
+orders/{orderId}            <- source chat assets (screenshots, voice notes, photos)
+  suite                     <- typed tests + questions + checker per test + health score
+  scans/{scanId}            <- per-check results (local first, synced later)
+proofs/{unguessableId}      <- public Vouch receipt (items + verdicts only, no personal data)
 ```
 
 ---
@@ -233,14 +233,14 @@ proofs/{unguessableId}      ← public Vouch receipt (items + verdicts only, no 
 
 | Time | Shot |
 |---|---|
-| 0:00–0:20 | **A real seller at a real packing table**, late at night: "I pack 40 orders alone. One mistake and I lose the customer." *(Use real footage and a real quote, with consent.)* |
-| 0:20–0:45 | The order arrives: a code-mixed chat + **a voice note** changing the color. (Show quick cuts of chats in 2–3 different languages, so viewers read it as a global problem.) Drop it into Vouch. |
-| 0:45–1:10 | **Compile view:** the cloud produces typed tests, including `ABSENCE(blue notebook)`. Then the **question-testing animation**: questions run against the correct photo and the wrong variants, one question fails, gets rewritten, passes. "7 of 8 on-device." |
-| 1:10–1:45 | **Wi-Fi off.** Items go into the box one by one and **tick green live**. The seller drops in the blue notebook, and it **flashes red instantly**. They swap it, and it goes green. The indicator shows DEVICE throughout. |
-| 1:45–2:05 | Seal the parcel. Back online, the Vouch receipt syncs. **The customer's phone** opens the link: "Vouched ✓: packed exactly as you asked." |
-| 2:05–2:35 | **Benchmark slide:** false approvals and cloud calls for A vs. C vs. D vs. E. Then the compile/run architecture diagram. |
-| 2:35–2:55 | **Future slide:** receipt → verified seller badge → courier integration → beyond commerce. |
-| 2:55–3:00 | Tagline. |
+| 0:00-0:20 | **A real seller at a real packing table**, late at night: "I pack 40 orders alone. One mistake and I lose the customer." *(Use real footage and a real quote, with consent.)* |
+| 0:20-0:45 | The order arrives: a code-mixed chat + **a voice note** changing the color. (Show quick cuts of chats in 2-3 different languages, so viewers read it as a global problem.) Drop it into Vouch. |
+| 0:45-1:10 | **Compile view:** the cloud produces typed tests, including `ABSENCE(blue notebook)`. Then the **question-testing animation**: questions run against the correct photo and the wrong variants, one question fails, gets rewritten, passes. "7 of 8 on-device." |
+| 1:10-1:45 | **Wi-Fi off.** Items go into the box one by one and **tick green live**. The seller drops in the blue notebook, and it **flashes red instantly**. They swap it, and it goes green. The indicator shows DEVICE throughout. |
+| 1:45-2:05 | Seal the parcel. Back online, the Vouch receipt syncs. **The customer's phone** opens the link: "Vouched: packed exactly as you asked." |
+| 2:05-2:35 | **Benchmark slide:** false approvals and cloud calls for A vs. C vs. D vs. E. Then the compile/run architecture diagram. |
+| 2:35-2:55 | **Future slide:** receipt -> verified seller badge -> courier integration -> beyond commerce. |
+| 2:55-3:00 | Tagline. |
 
 ---
 
@@ -249,10 +249,10 @@ proofs/{unguessableId}      ← public Vouch receipt (items + verdicts only, no 
 | When | Goal | Exit criterion |
 |---|---|---|
 | **Nov 25 (tonight)** | **Arrange the real seller for filming.** Set up the Firebase project, App Check, React skeleton, and Nano availability in Chrome. Start photographing the dataset. | Seller confirmed; "hello Nano" runs on-device through Firebase AI Logic. |
-| **Nov 26** | **Go/no-go test:** on about 30 photos, measure Nano's **accuracy and time per check** for open-ended vs. yes/no questions. Then build the compiler: understanding chats, screenshots and voice notes → typed tests + questions (schema-checked). | Numbers in hand. If yes/no questions don't beat open-ended clearly, re-plan that evening. |
+| **Nov 26** | **Go/no-go test:** on about 30 photos, measure Nano's **accuracy and time per check** for open-ended vs. yes/no questions. Then build the compiler: understanding chats, screenshots and voice notes -> typed tests + questions (schema-checked). | Numbers in hand. If yes/no questions don't beat open-ended clearly, re-plan that evening. |
 | **Nov 27** | Question testing (correct photo + mutants from chat images), the rewrite step, choosing the checker, the test-suite health panel. Checker + state machine with unit tests. | The compile pipeline runs end-to-end on 5 orders. |
-| **Nov 28** | Live run time: camera → motion check → Nano questions → smoothing → live checklist. Seal flow, cloud re-check, UNCERTAIN gate, offline mode. **Film the seller.** | Demo steps 1:10–1:45 work with Wi-Fi off. |
-| **Nov 29** | Vouch receipt + Firestore sync. **Run the full benchmark** (A–E) and the chat benchmark. README with results, architecture diagram, setup instructions. | Every number is in the README. |
+| **Nov 28** | Live run time: camera -> motion check -> Nano questions -> smoothing -> live checklist. Seal flow, cloud re-check, UNCERTAIN gate, offline mode. **Film the seller.** | Demo steps 1:10-1:45 work with Wi-Fi off. |
+| **Nov 29** | Vouch receipt + Firestore sync. **Run the full benchmark** (A-E) and the chat benchmark. README with results, architecture diagram, setup instructions. | Every number is in the README. |
 | **Nov 30 (morning)** | Edit the video, upload to YouTube (public, 3 minutes or less), Devpost description, final repo check. **Submit by 12:00 PM PT.** | Submitted with 2 hours to spare. |
 
 ### What to cut first if we fall behind
@@ -278,7 +278,7 @@ proofs/{unguessableId}      ← public Vouch receipt (items + verdicts only, no 
 |---|---|
 | Barcodes / SKU catalog | No catalog; checks compiled from each order |
 | Structured orders | Chats, screenshots and voice notes in mixed languages |
-| A single model asked one open question | Cloud compiles → device runs **pre-tested** questions |
+| A single model asked one open question | Cloud compiles -> device runs **pre-tested** questions |
 | Checks presence | Typed tests, including `ABSENCE` for items the customer replaced |
 | Takes a photo afterwards | **Live** checking as items go into the box |
 | Needs a connection / warehouse infrastructure | A laptop + webcam, offline on-device |
@@ -296,9 +296,9 @@ proofs/{unguessableId}      ← public Vouch receipt (items + verdicts only, no 
 
 | Risk | Mitigation |
 |---|---|
-| Nano is too slow for "live" checking | Only check when the scene changes; checking every 2–3 s still looks live on video. Measured on Nov 26. |
+| Nano is too slow for "live" checking | Only check when the scene changes; checking every 2-3 s still looks live on video. Measured on Nov 26. |
 | Nano is unreliable even on yes/no questions | Question testing sends unreliable questions to the cloud; the benchmark reports it honestly. If very few questions are reliable, re-plan on Nov 26. |
-| Near-identical variants | Detected when questions are tested → checked by the cloud using reference images. |
+| Near-identical variants | Detected when questions are tested -> checked by the cloud using reference images. |
 | Attributes that can't be seen in a photo | `ATTESTATION` tests; the AI never claims to have checked them. |
 | On-device on the web requires desktop Chrome | The packing-table setup is a laptop + webcam (the realistic setup for a home seller). |
 | Demand isn't validated | Interview 5 or more sellers; real seller footage and quotes go in the video. |
