@@ -14,7 +14,10 @@ const config = {
 };
 
 export const firebaseConfigured = Boolean(config.apiKey && config.projectId && config.appId);
-export const appCheckConfigured = Boolean(env.VITE_RECAPTCHA_ENTERPRISE_KEY);
+/** App Check runs with the reCAPTCHA Enterprise key in production, or a registered debug token in development. */
+export const appCheckConfigured = Boolean(
+  env.VITE_RECAPTCHA_ENTERPRISE_KEY || (env.DEV && env.VITE_APPCHECK_DEBUG_TOKEN),
+);
 
 export const COMPILER_MODEL = env.VITE_COMPILER_MODEL || "gemini-3.8-flash";
 export const CHECK_MODEL = env.VITE_CHECK_MODEL || "gemini-3.8-flash";
@@ -29,13 +32,15 @@ export function getFirebaseApp(): FirebaseApp {
   if (!app) {
     app = initializeApp(config);
     if (appCheckConfigured) {
-      if (env.DEV) {
-        // Registered debug token in development, otherwise let the SDK print a new one to the console.
-        (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string | boolean }).FIREBASE_APPCHECK_DEBUG_TOKEN =
-          env.VITE_APPCHECK_DEBUG_TOKEN || true;
+      if (env.DEV && env.VITE_APPCHECK_DEBUG_TOKEN) {
+        // Optional: a debug token registered in App Check, for hosts outside the reCAPTCHA key's domains.
+        // Without it, localhost uses the real reCAPTCHA Enterprise provider (localhost is an allowed domain).
+        (self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }).FIREBASE_APPCHECK_DEBUG_TOKEN =
+          env.VITE_APPCHECK_DEBUG_TOKEN;
       }
       initializeAppCheck(app, {
-        provider: new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_ENTERPRISE_KEY as string),
+        // In debug mode the SDK exchanges the debug token and does not use this key.
+        provider: new ReCaptchaEnterpriseProvider(env.VITE_RECAPTCHA_ENTERPRISE_KEY || "debug-mode"),
         isTokenAutoRefreshEnabled: true,
       });
     }
