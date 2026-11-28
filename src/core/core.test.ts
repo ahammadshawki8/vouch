@@ -202,3 +202,18 @@ describe("checkLabel", () => {
     expect(checkLabel({ type: "PRESENCE", label: "Blue notebook" })).toBe("Blue notebook");
   });
 });
+
+describe("change coverage matching", () => {
+  it("matches quantity and negation variants of the same item", async () => {
+    const { keyWords } = await import("./validateSuite");
+    expect(keyWords("one blue notebook")).toEqual(["blue", "notebook"]);
+    expect(keyWords("No blue notebooks")).toEqual(["blue", "notebook"]);
+    const s = notebookSuite();
+    const r = validateSuite({
+      ...s,
+      changes: [{ from: "one blue notebook", to: "one green notebook", evidence: "" }],
+      tests: s.tests.map((t) => (t.id === "t2" ? { ...t, label: "No blue notebook" } : t)),
+    });
+    expect(r.errors).toEqual([]);
+  });
+});

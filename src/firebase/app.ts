@@ -19,8 +19,8 @@ export const appCheckConfigured = Boolean(
   env.VITE_RECAPTCHA_ENTERPRISE_KEY || (env.DEV && env.VITE_APPCHECK_DEBUG_TOKEN),
 );
 
-export const COMPILER_MODEL = env.VITE_COMPILER_MODEL || "gemini-3.8-flash";
-export const CHECK_MODEL = env.VITE_CHECK_MODEL || "gemini-3.8-flash";
+export const COMPILER_MODEL = env.VITE_COMPILER_MODEL || "gemini-3.5-flash-lite";
+export const CHECK_MODEL = env.VITE_CHECK_MODEL || "gemini-3.5-flash-lite";
 
 let app: FirebaseApp | null = null;
 let ai: AI | null = null;

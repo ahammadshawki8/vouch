@@ -68,10 +68,12 @@ export function validateSuite(input: TestSuite): SuiteCheck {
 
   // Every change the customer made must produce an ABSENCE test for the item they replaced.
   for (const change of input.changes ?? []) {
-    const from = change.from.toLowerCase();
-    const covered = tests.some(
-      (t) => t.type === "ABSENCE" && (t.label.toLowerCase().includes(from) || from.includes(t.label.toLowerCase())),
-    );
+    const wanted = keyWords(change.from);
+    const covered = tests.some((t) => {
+      if (t.type !== "ABSENCE") return false;
+      const have = new Set(keyWords(`${t.label} ${t.item} ${t.attribute?.value ?? ""}`));
+      return wanted.length > 0 && wanted.every((w) => have.has(w));
+    });
     if (!covered) errors.push(`Change "${change.from}" to "${change.to}" has no ABSENCE test for "${change.from}".`);
   }
 
@@ -85,6 +87,19 @@ export function validateSuite(input: TestSuite): SuiteCheck {
       openQuestions: input.openQuestions ?? [],
     },
   };
+}
+
+const FILLER = new Set([
+  "a", "an", "the", "no", "not", "one", "two", "three", "four", "five", "any", "some", "of", "in", "x",
+]);
+
+/** Content words of an item phrase: "one blue notebook" and "No blue notebook" both give [blue, notebook]. */
+export function keyWords(phrase: string): string[] {
+  return phrase
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((w) => w && !FILLER.has(w) && !/^\d+$/.test(w))
+    .map((w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w));
 }
 
 function checkProbe(p: Probe, where: string, type: TestType, errors: string[]) {

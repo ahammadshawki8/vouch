@@ -6,6 +6,9 @@ import { CHECK_MODEL, COMPILER_MODEL, getVouchAI } from "../firebase/app";
  *  - the compiler runs in the cloud once per order (large multimodal model, multilingual, audio),
  *  - the runtime runs on the device for every settled camera frame (free, fast, offline),
  *  - the checker runs in the cloud only for tests the device cannot answer reliably.
+ *
+ * Cloud model choice (measured 2026-11-28 on this project): gemini-3.5-flash-lite compiled the
+ * reference order in 2.9 s with a valid suite; gemini-3.8-flash took 93 s and gemini-4-hydrogen 22 s.
  */
 
 export function compilerModel(schema: ObjectSchema): GenerativeModel {
@@ -19,7 +22,7 @@ export function compilerModel(schema: ObjectSchema): GenerativeModel {
         responseSchema: schema,
       },
     },
-  });
+  }, { timeout: 60_000 });
 }
 
 /** On-device runtime. `where` lets the pack station fall back to the cloud for a whole session. */
@@ -49,7 +52,7 @@ export function checkModel(schema: ObjectSchema): GenerativeModel {
         responseSchema: schema,
       },
     },
-  });
+  }, { timeout: 20_000 });
 }
 
 /** A plain on-device model, used only to download and warm up Gemini Nano. */
