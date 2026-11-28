@@ -35,10 +35,10 @@ export function stepSmoothing(
   const frame = state.frame + 1;
   const tracks: Record<string, TestTrack> = { ...state.tracks };
   for (const [id, v] of Object.entries(verdicts)) {
-    const prev = tracks[id] ?? { history: [], stable: "UNCERTAIN" as Verdict, changedAt: 0 };
+    const prev: TestTrack = tracks[id] ?? { history: [], stable: "UNCERTAIN", changedAt: 0 };
     if (prev.stable === "ATTESTED") continue; // seller confirmation is final
     const history = [...prev.history, v].slice(-window);
-    let stable = prev.stable;
+    let stable: Verdict = prev.stable;
     let changedAt = prev.changedAt;
     const counts = new Map<Verdict, number>();
     for (const h of history) counts.set(h, (counts.get(h) ?? 0) + 1);

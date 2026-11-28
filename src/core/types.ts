@@ -51,6 +51,10 @@ export interface Test {
   evidence: string;
   probes: Probe[];
   oracle: Oracle;
+  /** Source ids of product photos that show the correct item. Used by question validation. */
+  referenceSourceIds?: string[];
+  /** Source ids of product photos that show a wrong variant. Used as mutants by question validation. */
+  mutantSourceIds?: string[];
   probeStats?: Record<string, ProbeStats>;
 }
 
