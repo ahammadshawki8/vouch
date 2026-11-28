@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Order, Test, Verdict } from "../core/types";
-import { evaluateGate } from "../core/gate";
+import { checkLabel, evaluateGate } from "../core/gate";
 import { repo } from "../data/repo";
 import { median } from "../ai/callLog";
 import { useDeviceStatus } from "../ai/device";
@@ -164,7 +164,7 @@ export function PackStation({ id }: { id: string }) {
               <button className="btn big" onClick={() => start()}>
                 Start camera
               </button>
-              <button className="btn quiet" style={{ color: "#dfe6f2" }} onClick={() => fileRef.current?.click()}>
+              <button className="btn quiet" onClick={() => fileRef.current?.click()}>
                 Use a photo instead
               </button>
             </div>
@@ -248,13 +248,14 @@ export function PackStation({ id }: { id: string }) {
         <ul className="checklist">
           {suite.tests.map((t) => {
             const v = loop.verdicts[t.id] ?? "UNCERTAIN";
-            const cls = v.toLowerCase() + (loop.flash.has(t.id) ? " flash" : "");
+            const idle = v === "UNCERTAIN" && loop.checks === 0 && t.type !== "ATTESTATION";
+            const cls = (idle ? "idle" : v.toLowerCase()) + (loop.flash.has(t.id) ? " flash" : "");
             return (
               <li key={t.id} className={`check ${cls}`} aria-live="polite">
                 <span className="bar" aria-hidden="true" />
                 <div>
                   <div className="label">
-                    {t.type === "ABSENCE" ? `No ${t.label.charAt(0).toLowerCase()}${t.label.slice(1)}` : t.label}
+                    {checkLabel(t)}
                   </div>
                   <div className="sub">
                     <OracleTag oracle={t.oracle} />
@@ -265,7 +266,7 @@ export function PackStation({ id }: { id: string }) {
                     )}
                   </div>
                 </div>
-                <span className="state">{stateWord(t, v)}</span>
+                <span className="state">{idle ? (source ? "Looking" : "Waiting") : stateWord(t, v)}</span>
               </li>
             );
           })}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Oracle, Order, Test, TestType } from "../core/types";
 import { validateSuite } from "../core/validateSuite";
+import { checkLabel } from "../core/gate";
 import { repo } from "../data/repo";
 import { dataUrl } from "../lib/files";
 import { go } from "../router";
@@ -195,7 +196,7 @@ export function Review({ id }: { id: string }) {
                 {suite.tests.map((t) => (
                   <tr key={t.id}>
                     <td>
-                      <div style={{ fontWeight: 600, fontSize: 18 }}>{t.label}</div>
+                      <div style={{ fontWeight: 600, fontSize: 18 }}>{checkLabel(t)}</div>
                       <div className="small muted">{TYPE_TEXT[t.type]}</div>
                       <div className="quote" style={{ marginTop: 4 }}>
                         "{t.evidence}"

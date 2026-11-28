@@ -193,3 +193,12 @@ describe("validateSuite", () => {
     expect(deviceProbes(suite).map((p) => p.id)).toEqual(["p1", "p2", "p3", "p4"]);
   });
 });
+
+describe("checkLabel", () => {
+  it("reads ABSENCE tests as a negative", async () => {
+    const { checkLabel } = await import("./gate");
+    expect(checkLabel({ type: "ABSENCE", label: "Blue notebook" })).toBe("No blue notebook");
+    expect(checkLabel({ type: "ABSENCE", label: "No red cap" })).toBe("No red cap");
+    expect(checkLabel({ type: "PRESENCE", label: "Blue notebook" })).toBe("Blue notebook");
+  });
+});

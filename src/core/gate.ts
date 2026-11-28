@@ -1,5 +1,11 @@
 import type { Test, Verdict } from "./types";
 
+/** How a test reads on a checklist. ABSENCE tests read as "No blue notebook". */
+export function checkLabel(t: Pick<Test, "type" | "label">): string {
+  if (t.type !== "ABSENCE" || /^no\s/i.test(t.label)) return t.label;
+  return `No ${t.label.charAt(0).toLowerCase()}${t.label.slice(1)}`;
+}
+
 export interface GateResult {
   approved: boolean;
   passed: string[];
@@ -27,7 +33,7 @@ export function evaluateGate(tests: Test[], verdicts: Record<string, Verdict>): 
     } else {
       uncertain.push(t.id);
       reasons.push(
-        t.type === "ATTESTATION" ? `Confirm by hand: ${t.label}` : `Not confirmed yet: ${t.label}`,
+        t.type === "ATTESTATION" ? `Confirm by hand: ${t.label}` : `Not confirmed yet: ${checkLabel(t)}`,
       );
     }
   }

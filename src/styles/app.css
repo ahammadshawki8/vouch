@@ -518,6 +518,15 @@ textarea {
 .stage-empty .btn {
   background: #fff;
 }
+.stage-empty .btn.quiet {
+  background: transparent;
+  color: #dfe6f2;
+  border-color: rgba(223, 230, 242, 0.5);
+}
+.stage-empty .btn.quiet:hover {
+  border-color: #fff;
+  color: #fff;
+}
 .checklist-panel {
   background: var(--sheet);
   border-left: 2px solid var(--ink);
@@ -597,6 +606,9 @@ textarea {
 }
 .check.attested .state {
   color: var(--pass);
+}
+.check.idle .state {
+  color: var(--ink-3);
 }
 .check.flash {
   animation: flash 700ms ease-out;
