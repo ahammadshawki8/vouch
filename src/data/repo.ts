@@ -20,7 +20,7 @@ const receipts = createStore("vouch-receipts", "receipts");
 export const localRepo: Repo = {
   async listOrders() {
     const ids = (await keys(orders)) as string[];
-    const all = (await getMany<Order>(ids, orders)).filter(Boolean);
+    const all = (await getMany<Order | undefined>(ids, orders)).filter((o): o is Order => Boolean(o));
     return all.sort((a, b) => b.updatedAt - a.updatedAt);
   },
   getOrder: (id) => get<Order>(id, orders),
