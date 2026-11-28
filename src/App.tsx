@@ -1,44 +1,41 @@
 import { href, useRoute } from "./router";
+import { Landing } from "./screens/Landing";
 import { Orders } from "./screens/Orders";
 import { NewOrder } from "./screens/NewOrder";
 import { Review } from "./screens/Review";
 import { PackStation } from "./screens/PackStation";
 import { ReceiptView } from "./screens/ReceiptView";
 import { DeviceStatus } from "./components/bits";
+import { Logo } from "./components/Brand";
 
 export function App() {
   const route = useRoute();
 
-  // The receipt is what customers open. It has no seller navigation.
-  if (route.name === "receipt") {
-    return (
-      <div className="shell">
-        <header className="topbar">
-          <span className="wordmark">Vouch</span>
-        </header>
-        <main>
-          <ReceiptView id={route.id} />
-        </main>
-      </div>
-    );
-  }
+  if (route.name === "landing") return <Landing />;
 
+  // The receipt is what customers open. It carries the brand, not the seller's tools.
+  if (route.name === "receipt") return <ReceiptView id={route.id} />;
+
+  const inOrders = route.name === "orders" || route.name === "review" || route.name === "pack";
   return (
-    <div className="shell">
+    <div className="app">
       <header className="topbar">
-        <a className="wordmark" href={href({ name: "orders" })}>
-          Vouch
-        </a>
-        <nav className="topnav" aria-label="Main">
-          <a href={href({ name: "orders" })} aria-current={route.name === "orders" ? "page" : undefined}>
+        <div className="left">
+          <a href={href({ name: "landing" })} aria-label="Vouch home" style={{ textDecoration: "none" }}>
+            <Logo size={28} />
+          </a>
+        </div>
+        <nav className="center navpills" aria-label="Main">
+          <a href={href({ name: "orders" })} aria-current={inOrders ? "page" : undefined}>
             Orders
           </a>
           <a href={href({ name: "new" })} aria-current={route.name === "new" ? "page" : undefined}>
             New order
           </a>
         </nav>
-        <span className="spacer" />
-        <DeviceStatus />
+        <div className="right">
+          <DeviceStatus />
+        </div>
       </header>
       <main>
         {route.name === "orders" && <Orders />}

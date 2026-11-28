@@ -1,5 +1,5 @@
 import type { Order, Receipt, Verdict } from "../core/types";
-import { evaluateGate } from "../core/gate";
+import { checkLabel, evaluateGate } from "../core/gate";
 import { newId, repo } from "../data/repo";
 
 export interface SealInput {
@@ -29,7 +29,7 @@ export async function sealParcel({ order, verdicts, photo }: SealInput): Promise
     orderId: order.id,
     sealedAt: Date.now(),
     photo,
-    items: suite.tests.map((t) => ({ label: t.label, verdict: verdicts[t.id] ?? "UNCERTAIN", checkedBy: t.oracle })),
+    items: suite.tests.map((t) => ({ label: checkLabel(t), verdict: verdicts[t.id] ?? "UNCERTAIN", checkedBy: t.oracle })),
   };
   await repo().saveReceipt(receipt);
   await repo().saveOrder({ ...order, status: "vouched", receiptId: receipt.id });

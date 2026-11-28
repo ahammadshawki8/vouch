@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Order, Source, SourceKind } from "../core/types";
 import { compileOrder } from "../ai/compiler";
 import { firebaseConfigured } from "../firebase/app";
 import { dataUrl, fileToSource, textSource } from "../lib/files";
 import { newId, repo } from "../data/repo";
 import { go } from "../router";
+import { DotArrow, Sticker } from "../components/Brand";
 
 const KIND_TEXT: Record<SourceKind, string> = {
   screenshot: "Chat screenshot",
@@ -18,10 +19,17 @@ export function NewOrder() {
   const [files, setFiles] = useState<Source[]>([]);
   const [chat, setChat] = useState("");
   const [over, setOver] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busySince, setBusySince] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const counter = useRef(1);
+
+  useEffect(() => {
+    if (busySince === null) return;
+    const t = window.setInterval(() => setElapsed(Math.round((Date.now() - busySince) / 1000)), 250);
+    return () => window.clearInterval(t);
+  }, [busySince]);
 
   const addFiles = async (list: FileList | null) => {
     if (!list) return;
@@ -41,23 +49,20 @@ export function NewOrder() {
     setFiles((prev) => prev.map((s) => (s.id === id ? { ...s, kind } : s)));
   const remove = (id: string) => setFiles((prev) => prev.filter((s) => s.id !== id));
 
-  const sources = (): Source[] => {
-    const all = [...files];
-    if (chat.trim()) all.push(textSource(`S${counter.current}`, chat.trim()));
-    return all;
-  };
-
   const compile = async () => {
-    setBusy(true);
+    setBusySince(Date.now());
+    setElapsed(0);
     setError(null);
     const now = Date.now();
+    const sources = [...files];
+    if (chat.trim()) sources.push(textSource(`S${counter.current}`, chat.trim()));
     const order: Order = {
       id: newId("ord"),
-      title: title.trim() || `Order ${new Date(now).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}`,
+      title: title.trim() || `Order of ${new Date(now).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`,
       createdAt: now,
       updatedAt: now,
       status: "draft",
-      sources: sources(),
+      sources,
     };
     try {
       await repo().saveOrder(order);
@@ -67,27 +72,28 @@ export function NewOrder() {
       go({ name: "review", id: order.id });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-      setBusy(false);
+      setBusySince(null);
     }
   };
 
-  const canCompile = (files.length > 0 || chat.trim().length > 0) && !busy && firebaseConfigured;
+  const busy = busySince !== null;
+  const ready = files.length > 0 || chat.trim().length > 0;
 
   return (
     <div className="page">
       <div className="page-head">
         <div>
-          <h1>New order</h1>
-          <p>
-            Add everything the customer sent you. Vouch reads it in the cloud, works out the final order and turns it
-            into checks for the packing table.
+          <h1 className="page-title">New order</h1>
+          <p className="page-lede">
+            Give Vouch everything the customer sent. It works out the final order and turns it into checks for the
+            packing table.
           </p>
         </div>
       </div>
 
       {!firebaseConfigured && (
-        <div className="notice error" style={{ marginBottom: 24 }}>
-          <p>Firebase is not configured. Copy .env.example to .env.local, add your web app config and restart.</p>
+        <div className="note error" style={{ marginBottom: 24 }}>
+          Firebase is not configured. Copy .env.example to .env.local, add the web app config and restart.
         </div>
       )}
 
@@ -97,6 +103,7 @@ export function NewOrder() {
             className={`dropzone${over ? " over" : ""}`}
             role="button"
             tabIndex={0}
+            aria-label="Add chat screenshots, product photos or voice notes"
             onClick={() => input.current?.click()}
             onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()}
             onDragOver={(e) => {
@@ -110,8 +117,19 @@ export function NewOrder() {
               void addFiles(e.dataTransfer.files);
             }}
           >
-            <strong>Drop chat screenshots, product photos or voice notes</strong>
-            <span className="muted">Or click to choose files. Images and audio both work.</span>
+            <span className="strip" aria-hidden="true" />
+            <span className="label-sticker">
+              <Sticker tilt={6} tone="paper">
+                Drop or click
+              </Sticker>
+            </span>
+            <strong>Drop the whole conversation here</strong>
+            <span className="muted">Phone screenshots work best. Add the product photos you showed the customer.</span>
+            <div className="kinds" aria-hidden="true">
+              <span>Chat screenshots</span>
+              <span>Product photos</span>
+              <span>Voice notes</span>
+            </div>
             <input
               ref={input}
               type="file"
@@ -131,7 +149,7 @@ export function NewOrder() {
                 <div className="source" key={s.id}>
                   <div className="thumb">
                     {s.kind === "audio" ? (
-                      <audio controls src={dataUrl(s)} style={{ width: "100%" }} />
+                      <audio controls src={dataUrl(s)} style={{ width: "92%" }} />
                     ) : s.kind === "text" ? (
                       <span className="small muted">Text</span>
                     ) : (
@@ -140,7 +158,7 @@ export function NewOrder() {
                   </div>
                   <div className="meta">
                     <span>
-                      <span className="sid">{s.id}</span> <span className="muted">{s.name}</span>
+                      <span className="sid">{s.id}</span> <span className="faint">{s.name}</span>
                     </span>
                     {s.kind === "screenshot" || s.kind === "product" ? (
                       <select
@@ -154,7 +172,7 @@ export function NewOrder() {
                     ) : (
                       <span className="muted">{KIND_TEXT[s.kind]}</span>
                     )}
-                    <button className="btn quiet small" onClick={() => remove(s.id)}>
+                    <button className="btn ghost small" onClick={() => remove(s.id)}>
                       Remove
                     </button>
                   </div>
@@ -164,40 +182,39 @@ export function NewOrder() {
           )}
         </div>
 
-        <div style={{ display: "grid", gap: 20 }}>
+        <div className="compose">
           <div className="field">
             <label htmlFor="title">Order name</label>
             <input
               id="title"
               type="text"
               value={title}
-              placeholder="For example: Maya, 3 items, Thursday"
+              placeholder="Maya, stationery gift"
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
           <div className="field">
-            <label htmlFor="chat">Chat messages</label>
+            <label htmlFor="chat">Or paste the messages</label>
             <textarea
               id="chat"
               value={chat}
-              placeholder={"Paste the conversation, in any language.\n\nOne blue notebook, two black pens and a yellow highlighter please\nactually make the notebook green"}
+              placeholder={"Any language, as it was written.\n\nhi! one blue notebook, two black pens and a yellow highlighter\nwait, notebook ta green kore dao, blue na"}
               onChange={(e) => setChat(e.target.value)}
             />
-            <span className="hint">Customer names and phone numbers are not needed. You can leave them out.</span>
+            <span className="hint">Leave out phone numbers and addresses. Vouch only needs what goes in the box.</span>
           </div>
 
-          {error && (
-            <div className="notice error">
-              <p>{error}</p>
-            </div>
-          )}
+          {error && <div className="note error">{error}</div>}
 
-          <div className="actions">
-            <button className="btn primary big" disabled={!canCompile} onClick={compile}>
-              {busy ? "Reading the conversation" : "Build the checklist"}
-            </button>
-            {busy && <span className="muted small">Cloud model is resolving changes and writing checks.</span>}
-          </div>
+          <button className="btn primary big wide" disabled={!ready || busy || !firebaseConfigured} onClick={compile}>
+            {busy ? `Reading the conversation, ${elapsed}s` : "Build the checklist"}
+            <DotArrow />
+          </button>
+          <p className="small muted">
+            {busy
+              ? "Gemini is resolving changes and writing the checks. This usually takes a few seconds."
+              : "Runs once in the cloud. Everything after this works on your device."}
+          </p>
         </div>
       </div>
     </div>

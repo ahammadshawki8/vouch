@@ -1,11 +1,11 @@
+import { useState } from "react";
 import type { Oracle, OrderStatus, Verdict } from "../core/types";
 import { prepareDeviceModel, useDeviceStatus } from "../ai/device";
 import { firebaseConfigured } from "../firebase/app";
-import { useState } from "react";
 
 export function OracleTag({ oracle }: { oracle: Oracle }) {
   const text = oracle === "DEVICE" ? "On device" : oracle === "CLOUD" ? "Cloud" : "You confirm";
-  return <span className={`tag ${oracle.toLowerCase()}`}>{text}</span>;
+  return <span className={`oracle ${oracle.toLowerCase()}`}>{text}</span>;
 }
 
 export const STATUS_TEXT: Record<OrderStatus, string> = {
@@ -16,6 +16,10 @@ export const STATUS_TEXT: Record<OrderStatus, string> = {
   vouched: "Vouched",
 };
 
+export function StatusTag({ status }: { status: OrderStatus }) {
+  return <span className={`status-tag ${status}`}>{STATUS_TEXT[status]}</span>;
+}
+
 export const VERDICT_TEXT: Record<Verdict, string> = {
   PASS: "Packed",
   FAIL: "Wrong",
@@ -23,8 +27,8 @@ export const VERDICT_TEXT: Record<Verdict, string> = {
   ATTESTED: "Confirmed",
 };
 
-/** Device model status with the one action that moves it forward. */
-export function DeviceStatus({ compact = false }: { compact?: boolean }) {
+/** On-device model status as a pill, with the one action that moves it forward. */
+export function DeviceStatus() {
   const { status, progress } = useDeviceStatus();
   const [error, setError] = useState<string | null>(null);
 
@@ -38,42 +42,36 @@ export function DeviceStatus({ compact = false }: { compact?: boolean }) {
   };
 
   let text: string;
-  let color = "var(--ink-2)";
+  let tone = "";
   switch (status) {
     case "checking":
-      text = "Checking on-device model";
+      text = "Checking device";
       break;
     case "available":
-      text = "On-device model ready";
-      color = "var(--pass)";
+      text = "Nano ready on device";
+      tone = "ready";
       break;
     case "downloading":
-      text = progress > 0 ? `Downloading on-device model ${Math.round(progress * 100)}%` : "Preparing on-device model";
-      color = "#9a6413";
+      text = progress > 0 ? `Getting Nano ${Math.round(progress * 100)}%` : "Getting Nano ready";
+      tone = "busy";
       break;
     case "downloadable":
-      text = "On-device model not downloaded";
-      color = "#9a6413";
+      text = "Nano not on this device";
       break;
     case "unavailable":
-      text = "This device cannot run the on-device model";
-      color = "var(--fail)";
+      text = "Device cannot run Nano";
+      tone = "bad";
       break;
     default:
-      text = "On-device model needs Chrome on desktop";
-      color = "var(--fail)";
+      text = "Nano needs desktop Chrome";
+      tone = "bad";
   }
 
   return (
-    <span className="small" style={{ display: "inline-flex", gap: 10, alignItems: "center", color }}>
-      <span className="status-dot" aria-hidden="true" />
+    <span className={`status-pill ${tone}`} title={error ?? undefined}>
+      <span className="lamp" aria-hidden="true" />
       <span>{text}</span>
-      {status === "downloadable" && firebaseConfigured && (
-        <button className="btn quiet small" onClick={prepare}>
-          Download
-        </button>
-      )}
-      {!compact && error && <span style={{ color: "var(--fail)" }}>{error}</span>}
+      {status === "downloadable" && firebaseConfigured && <button onClick={prepare}>Download</button>}
     </span>
   );
 }
@@ -85,5 +83,5 @@ export function timeAgo(ts: number): string {
   if (m < 60) return `${m} min ago`;
   const h = Math.round(m / 60);
   if (h < 24) return `${h} h ago`;
-  return new Date(ts).toLocaleDateString();
+  return new Date(ts).toLocaleDateString([], { day: "numeric", month: "short" });
 }

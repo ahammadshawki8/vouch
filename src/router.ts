@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type Route =
+  | { name: "landing" }
   | { name: "orders" }
   | { name: "new" }
   | { name: "review"; id: string }
@@ -10,17 +11,20 @@ export type Route =
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   const [head, id] = parts;
+  if (head === "orders") return { name: "orders" };
   if (head === "new") return { name: "new" };
   if (head === "order" && id) return { name: "review", id };
   if (head === "pack" && id) return { name: "pack", id };
   if (head === "receipt" && id) return { name: "receipt", id };
-  return { name: "orders" };
+  return { name: "landing" };
 }
 
 export function href(r: Route): string {
   switch (r.name) {
-    case "orders":
+    case "landing":
       return "#/";
+    case "orders":
+      return "#/orders";
     case "new":
       return "#/new";
     case "review":

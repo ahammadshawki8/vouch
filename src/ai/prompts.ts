@@ -26,7 +26,10 @@ Product photos:
 
 Evidence: for every test, quote the words from the conversation that justify it, in the original language.
 
-If something is genuinely ambiguous, add it to openQuestions instead of guessing.`;
+If something is genuinely ambiguous, add it to openQuestions instead of guessing.
+
+Summary: write the final order as a short list a seller can read at a glance, with no preamble.
+Example: "One green notebook, two black pens, a yellow highlighter and a thank-you card."`;
 
 export function describeSource(s: Source): string {
   switch (s.kind) {
@@ -51,7 +54,10 @@ export function probePrompt(probes: Probe[]): string {
       ? `${p.id}: ${p.question} (answer 0, 1, 2, 3, 4+ or unsure)`
       : `${p.id}: ${p.question} (answer yes, no or unsure)`,
   );
-  return `This photo shows an open parcel on a packing table. Answer each question only from what is clearly visible in the photo. If an item is covered, cut off or too blurry to judge, answer unsure.
+  return `This photo shows an open parcel on a packing table. Answer each question only from what is in the photo.
+- Answer yes when you can see the thing asked about.
+- Answer no when you cannot see it anywhere in the photo. Not seeing something is a clear answer: no.
+- Answer unsure only when part of the photo is covered, cut off or too blurry to tell.
 
 ${lines.join("\n")}
 

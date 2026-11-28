@@ -3,13 +3,15 @@ import type { Order, Test, Verdict } from "../core/types";
 import { checkLabel, evaluateGate } from "../core/gate";
 import { repo } from "../data/repo";
 import { median } from "../ai/callLog";
-import { useDeviceStatus } from "../ai/device";
+import { useDeviceStatus, warmDevice } from "../ai/device";
 import { firebaseConfigured } from "../firebase/app";
 import { listCameras, startCamera, stopCamera, type FrameSource } from "../runtime/camera";
 import { usePackLoop } from "../runtime/usePackLoop";
 import { sealParcel } from "../runtime/seal";
-import { DeviceStatus, OracleTag } from "../components/bits";
-import { Stamp } from "../components/Stamp";
+import { OracleTag } from "../components/bits";
+import { DotArrow, TapeTick } from "../components/Brand";
+import { CheckIcon, CrossIcon, HandIcon } from "../components/Icons";
+import { SealMoment } from "../components/SealMoment";
 import { go } from "../router";
 
 function stateWord(t: Test, v: Verdict): string {
@@ -18,7 +20,7 @@ function stateWord(t: Test, v: Verdict): string {
   if (v === "FAIL") {
     switch (t.type) {
       case "ABSENCE":
-        return "Remove it";
+        return "Take it out";
       case "COUNT":
         return "Wrong count";
       case "ATTRIBUTE":
@@ -29,9 +31,9 @@ function stateWord(t: Test, v: Verdict): string {
         return "Missing";
     }
   }
-  if (t.type === "ATTESTATION") return "Confirm";
+  if (t.type === "ATTESTATION") return "Your call";
   if (t.oracle === "CLOUD") return "At seal";
-  return "Checking";
+  return "Looking";
 }
 
 function useOnline() {
@@ -59,7 +61,7 @@ export function PackStation({ id }: { id: string }) {
   const [useCloud, setUseCloud] = useState(false);
   const [sealing, setSealing] = useState(false);
   const [sealReasons, setSealReasons] = useState<string[]>([]);
-  const [stamped, setStamped] = useState<{ receiptId: string; at: number } | null>(null);
+  const [sealed, setSealed] = useState<{ receiptId: string; at: number } | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -81,8 +83,26 @@ export function PackStation({ id }: { id: string }) {
   }, [id]);
 
   const where: "device" | "cloud" = useCloud || device.status !== "available" ? "cloud" : "device";
+
+  useEffect(() => {
+    if (where === "device" && firebaseConfigured) void warmDevice();
+  }, [where]);
+
+  // Development only: lets scripted demos and tests feed a still image instead of the camera.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const onPhoto = (e: Event) => {
+      const url = (e as CustomEvent<string>).detail;
+      stopCamera(streamRef.current);
+      streamRef.current = null;
+      setSource(null);
+      setPhotoUrl(url);
+    };
+    window.addEventListener("vouch-dev-photo", onPhoto);
+    return () => window.removeEventListener("vouch-dev-photo", onPhoto);
+  }, []);
   const canRun = firebaseConfigured && (where === "device" || online);
-  const loop = usePackLoop(order?.suite, source, canRun && !stamped, where);
+  const loop = usePackLoop(order?.suite, source, canRun && !sealed, where);
 
   const gate = useMemo(
     () => (order?.suite ? evaluateGate(order.suite.tests, loop.verdicts) : null),
@@ -91,6 +111,7 @@ export function PackStation({ id }: { id: string }) {
 
   const start = async (deviceId?: string) => {
     setCamError(null);
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
     setPhotoUrl(null);
     try {
       stopCamera(streamRef.current);
@@ -108,6 +129,7 @@ export function PackStation({ id }: { id: string }) {
     stopCamera(streamRef.current);
     streamRef.current = null;
     if (photoUrl) URL.revokeObjectURL(photoUrl);
+    setSource(null);
     setPhotoUrl(URL.createObjectURL(file));
   };
 
@@ -122,27 +144,33 @@ export function PackStation({ id }: { id: string }) {
       return;
     }
     stopCamera(streamRef.current);
-    setStamped({ receiptId: result.receipt.id, at: result.receipt.sealedAt });
-    window.setTimeout(() => go({ name: "receipt", id: result.receipt.id }), 2000);
+    setSealed({ receiptId: result.receipt.id, at: result.receipt.sealedAt });
+    window.setTimeout(() => go({ name: "receipt", id: result.receipt.id }), 2400);
   };
 
   if (order === undefined) return null;
   if (order === null || !order.suite) {
     return (
       <div className="page">
-        <div className="notice error">
-          <p>This order has no confirmed checklist. Review it first.</p>
-        </div>
+        <div className="note error">This order has no confirmed checklist. Review it first.</div>
       </div>
     );
   }
 
   const suite = order.suite;
   const med = median(loop.latencies);
-  const motionText =
-    loop.motion === "moving" ? "Hands in the box" : loop.motion === "settling" ? "Settling" : "Watching the box";
-  const sourceText =
-    loop.lastCall?.source === "on_device" ? "on this device" : loop.lastCall?.source === "in_cloud" ? "in the cloud" : "";
+  const done = gate?.passed.length ?? 0;
+  const total = suite.tests.length;
+  const motionText = loop.checking
+    ? "Checking"
+    : loop.motion === "moving"
+      ? "Hands in the box"
+      : loop.motion === "settling"
+        ? "Settling"
+        : "Watching";
+  const ranOn =
+    loop.lastCall?.source === "on_device" ? "device" : loop.lastCall?.source === "in_cloud" ? "cloud" : null;
+  const live = Boolean(source || photoUrl);
 
   return (
     <div className="station">
@@ -151,26 +179,35 @@ export function PackStation({ id }: { id: string }) {
         {photoUrl && (
           <img
             ref={imgRef}
+            className="still"
             src={photoUrl}
             alt="Photo of the box being checked"
             onLoad={() => setSource(imgRef.current)}
           />
         )}
-        {!source && !photoUrl && (
+
+        {!live && (
           <div className="stage-empty">
-            <h2>Point the camera at the open box</h2>
-            <p>Put items in one at a time. Each check turns green as soon as the item is seen.</p>
+            <h2>Point the camera into the open box.</h2>
+            <p>Put items in one at a time. Each check turns green the moment Vouch sees the right thing.</p>
             <div className="actions">
-              <button className="btn big" onClick={() => start()}>
-                Start camera
+              <button className="btn primary big" onClick={() => start()}>
+                Start the camera
+                <DotArrow />
               </button>
-              <button className="btn quiet" onClick={() => fileRef.current?.click()}>
-                Use a photo instead
+              <button className="btn pill big" onClick={() => fileRef.current?.click()}>
+                Use a photo
               </button>
             </div>
-            {camError && <p style={{ color: "#f2b8b3" }}>Camera could not start: {camError}</p>}
+            {camError && <p style={{ color: "#f5b7c1" }}>The camera did not start: {camError}</p>}
           </div>
         )}
+        {!live && (
+          <span className="corner-tick" aria-hidden="true">
+            <TapeTick size={420} />
+          </span>
+        )}
+
         <input
           ref={fileRef}
           type="file"
@@ -181,116 +218,143 @@ export function PackStation({ id }: { id: string }) {
             e.target.value = "";
           }}
         />
-        {source && (
-          <div className="stage-bar">
-            <span>
-              <strong>{loop.checking ? "Checking" : motionText}</strong>
-            </span>
-            <span>{loop.checks} checks</span>
-            {med > 0 && <span>{(med / 1000).toFixed(1)} s per check</span>}
-            {sourceText && <span>Last check ran {sourceText}</span>}
-            <span style={{ flex: 1 }} />
-            {cameras.length > 1 && (
-              <select
-                aria-label="Camera"
-                value={cameraId}
-                onChange={(e) => {
-                  setCameraId(e.target.value);
-                  void start(e.target.value);
-                }}
-                style={{ width: "auto", padding: "4px 8px" }}
-              >
-                <option value="">Default camera</option>
-                {cameras.map((c) => (
-                  <option key={c.deviceId} value={c.deviceId}>
-                    {c.label || "Camera"}
-                  </option>
-                ))}
-              </select>
-            )}
-            <button className="btn quiet small" style={{ color: "#dfe6f2" }} onClick={() => fileRef.current?.click()}>
-              Use a photo
-            </button>
-          </div>
+
+        {live && (
+          <>
+            <div className="hud">
+              <span className="hud-chip live">
+                <span className="lamp" />
+                {motionText}
+              </span>
+              {ranOn && (
+                <span className={`hud-chip ${ranOn}`}>
+                  <span className="lamp" />
+                  {ranOn === "device" ? "Checked on device" : "Checked in the cloud"}
+                  {med > 0 && <span className="num"> {(med / 1000).toFixed(1)} s</span>}
+                </span>
+              )}
+              <span className="hud-chip num">{loop.checks} looks</span>
+            </div>
+            <div className="hud-bottom">
+              {cameras.length > 1 ? (
+                <span className="hud-chip">
+                  <select
+                    aria-label="Camera"
+                    value={cameraId}
+                    onChange={(e) => {
+                      setCameraId(e.target.value);
+                      void start(e.target.value);
+                    }}
+                  >
+                    <option value="">Default camera</option>
+                    {cameras.map((c) => (
+                      <option key={c.deviceId} value={c.deviceId}>
+                        {c.label || "Camera"}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              ) : (
+                <span />
+              )}
+              <button className="btn pill small" onClick={() => fileRef.current?.click()}>
+                Use a photo
+              </button>
+            </div>
+          </>
         )}
       </section>
 
-      <section className="checklist-panel" aria-label="Checklist">
-        <div className="checklist-head">
+      <section className="sheet" aria-label="Checklist">
+        <div className="sheet-head">
           <h2>{order.title}</h2>
-          <p className="muted small">{suite.summary}</p>
-          <div className="actions" style={{ gap: 16 }}>
-            <DeviceStatus compact />
-            <span className="small" style={{ color: online ? "var(--ink-2)" : "#9a6413" }}>
+          <div className="progress-bar" aria-label={`${done} of ${total} checks done`}>
+            <span style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+          </div>
+          <div className="row">
+            <span className="mini-pill num">
+              {done} of {total} done
+            </span>
+            <span className={`mini-pill ${online ? "ok" : "warn"}`}>
+              <span className="lamp" />
               {online ? "Online" : "Offline"}
             </span>
+            <span className={`mini-pill ${where === "device" ? "ok" : "warn"}`}>
+              <span className="lamp" />
+              {where === "device" ? "Checks run on this device" : "Checks run in the cloud"}
+            </span>
+            {device.status === "available" && (
+              <span className="mini-pill">
+                <label>
+                  <input type="checkbox" checked={useCloud} onChange={(e) => setUseCloud(e.target.checked)} />
+                  Use cloud
+                </label>
+              </span>
+            )}
           </div>
-          {device.status !== "available" && device.status !== "checking" && (
-            <p className="small muted">
-              {online
-                ? "Checks will run in the cloud until the on-device model is ready."
-                : "Offline and no on-device model: checks are paused."}
-            </p>
-          )}
-          {device.status === "available" && (
-            <label className="small muted" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <input type="checkbox" checked={useCloud} onChange={(e) => setUseCloud(e.target.checked)} />
-              Run checks in the cloud instead
-            </label>
+          {!canRun && (
+            <p className="small muted">Offline and the on-device model is not ready, so checks are paused.</p>
           )}
           {loop.error && (
             <p className="small" style={{ color: "var(--fail)" }}>
-              Last check failed: {loop.error}
+              The last check failed: {loop.error}
             </p>
           )}
         </div>
 
-        <ul className="checklist">
+        <ul className="live-list">
           {suite.tests.map((t) => {
             const v = loop.verdicts[t.id] ?? "UNCERTAIN";
-            const idle = v === "UNCERTAIN" && loop.checks === 0 && t.type !== "ATTESTATION";
-            const cls = (idle ? "idle" : v.toLowerCase()) + (loop.flash.has(t.id) ? " flash" : "");
+            const human = t.type === "ATTESTATION" && v !== "ATTESTED";
+            const idle = v === "UNCERTAIN" && loop.checks === 0 && !human;
+            const cls = human ? "human" : idle ? "idle" : v.toLowerCase();
             return (
-              <li key={t.id} className={`check ${cls}`} aria-live="polite">
-                <span className="bar" aria-hidden="true" />
+              <li key={t.id} className={`live ${cls}${loop.flash.has(t.id) ? " flash" : ""}`}>
+                <span className="mark" aria-hidden="true">
+                  {(v === "PASS" || v === "ATTESTED") && <CheckIcon />}
+                  {v === "FAIL" && <CrossIcon />}
+                  {human && <HandIcon />}
+                </span>
                 <div>
-                  <div className="label">
-                    {checkLabel(t)}
-                  </div>
+                  <div className="label">{checkLabel(t)}</div>
                   <div className="sub">
                     <OracleTag oracle={t.oracle} />
-                    {t.type === "ATTESTATION" && v !== "ATTESTED" && (
-                      <button className="btn small" style={{ padding: "4px 12px" }} onClick={() => loop.confirm(t.id)}>
+                    {human && (
+                      <button className="btn primary small" onClick={() => loop.confirm(t.id)}>
                         I checked this
+                        <DotArrow />
                       </button>
                     )}
                   </div>
                 </div>
-                <span className="state">{idle ? (source ? "Looking" : "Waiting") : stateWord(t, v)}</span>
+                <span className="state" aria-live="polite">
+                  {idle ? (live ? "Looking" : "Waiting") : stateWord(t, v)}
+                </span>
               </li>
             );
           })}
         </ul>
 
-        <div className="seal-area">
+        <div className="seal">
           {gate && !gate.approved && (
             <ul className="blockers" aria-label="What still blocks the parcel">
-              {(sealReasons.length ? sealReasons : gate.reasons).slice(0, 4).map((r) => (
+              {(sealReasons.length ? sealReasons : gate.reasons).slice(0, 3).map((r) => (
                 <li key={r}>{r}</li>
               ))}
             </ul>
           )}
           <button
-            className="btn primary big"
+            className="btn primary big wide"
             disabled={!gate?.approved || sealing || !loop.lastFrame}
             onClick={seal}
           >
-            {gate?.approved ? "Seal parcel" : "Seal parcel when every check passes"}
+            {gate?.approved ? "Seal the parcel" : `Seal when all ${total} checks pass`}
+            <DotArrow />
           </button>
         </div>
       </section>
 
-      {stamped && <Stamp at={stamped.at} reference={order.title} />}
+      {sealed && <SealMoment at={sealed.at} reference={order.title} checks={total} />}
     </div>
   );
 }

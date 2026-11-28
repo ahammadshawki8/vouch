@@ -63,6 +63,23 @@ export async function prepareDeviceModel(): Promise<void> {
   }
 }
 
+let warmed: Promise<void> | null = null;
+/**
+ * Load Gemini Nano into memory before the first real check. The first on-device call
+ * takes many seconds while the model loads; later calls take about one to two seconds.
+ */
+export function warmDevice(): Promise<void> {
+  if (!warmed) {
+    warmed = warmupModel()
+      .generateContent("Reply with the word ready.")
+      .then(() => undefined)
+      .catch(() => {
+        warmed = null;
+      });
+  }
+  return warmed;
+}
+
 export function useDeviceStatus() {
   const [state, setState] = useState(current);
   useEffect(() => {

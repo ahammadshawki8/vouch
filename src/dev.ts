@@ -42,6 +42,12 @@ export async function smokeTest(variant: "correct" | "wrong" = "correct", where:
   return { answers, verdicts: evaluateFrame(suite.tests, answers), ms: record.ms, source: record.source };
 }
 
+/** Development only: show a drawn scene on the pack station, as if the camera saw it. */
+export function showScene(variant: "correct" | "wrong") {
+  const url = `data:image/jpeg;base64,${drawScene(variant)}`;
+  window.dispatchEvent(new CustomEvent("vouch-dev-photo", { detail: url }));
+}
+
 function drawScene(variant: "correct" | "wrong"): string {
   const c = document.createElement("canvas");
   c.width = 768;
